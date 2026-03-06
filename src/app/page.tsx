@@ -99,6 +99,30 @@ const projects: {
   },
   {
     id: "04",
+    slug: "vault",
+    title: "Vault",
+    subtitle: "Privacy-first universal preference management",
+    description: (
+      <>
+        A system that eliminates the{" "}
+        <L href="https://en.wikipedia.org/wiki/Cold_start_(recommender_systems)">
+          cold start problem
+        </L>{" "}
+        by letting preferences follow users across apps. Raw text never leaves
+        the device: client-side{" "}
+        <L href="https://webllm.mlc.ai">WebLLM</L> generates semantic
+        embeddings stored via{" "}
+        <L href="https://github.com/pgvector/pgvector">pgvector</L>, with
+        game-theoretic anti-gaming and temporal decay.
+      </>
+    ),
+    tags: ["FastAPI", "pgvector", "WebLLM", "OAuth 2.0"],
+    link: "https://github.com/kavishsathia/vault",
+    linkLabel: "github",
+    imageCount: 3,
+  },
+  {
+    id: "05",
     slug: "oz",
     title: "Oz",
     subtitle: "An AI operating system built under 24 hours",

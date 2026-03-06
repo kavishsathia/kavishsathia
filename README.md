@@ -38,7 +38,17 @@ An autonomous adversarial agent that intercepts your AI agent's tool calls in re
 
 `Elasticsearch` `ES|QL` `Python` `OpenAI Agents SDK` | [github](https://github.com/kavishsathia/gauntlet)
 
-### 04 · Oz
+### 04 · Vault
+
+**Privacy-first universal preference management**
+
+<p align="center"><img src="public/projects/vault/0.png" width="80%" /></p>
+
+A system that eliminates the [cold start problem](https://en.wikipedia.org/wiki/Cold_start_(recommender_systems)) by letting preferences follow users across apps. Raw text never leaves the device: client-side [WebLLM](https://webllm.mlc.ai) generates semantic embeddings stored via [pgvector](https://github.com/pgvector/pgvector), with game-theoretic anti-gaming and temporal decay.
+
+`FastAPI` `pgvector` `WebLLM` `OAuth 2.0` | [github](https://github.com/kavishsathia/vault)
+
+### 05 · Oz
 
 **An AI operating system built under 24 hours**
 
