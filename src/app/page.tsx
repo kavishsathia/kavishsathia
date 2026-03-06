@@ -1,65 +1,267 @@
-import Image from "next/image";
+import Carousel from "@/components/Carousel";
+import { ReactNode } from "react";
+
+const L = ({
+  href,
+  children,
+}: {
+  href: string;
+  children: ReactNode;
+}) => (
+  <a
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="underline underline-offset-2 hover:text-foreground transition-colors"
+  >
+    {children}
+  </a>
+);
+
+const projects: {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle: string;
+  description: ReactNode;
+  tags: string[];
+  link?: string;
+  linkLabel?: string;
+  imageCount: number;
+}[] = [
+  {
+    id: "01",
+    slug: "star",
+    title: "Star",
+    subtitle: "A programming language that compiles to WebAssembly",
+    description: (
+      <>
+        A statically-typed programming language that compiles to{" "}
+        <L href="https://webassembly.org">WebAssembly</L>, facilitating
+        seamless cross-language library development. Write once, generate
+        idiomatic APIs for Python, JavaScript, Rust, and Go. No more parallel
+        SDK maintenance.
+      </>
+    ),
+    tags: ["Compiler", "WebAssembly", "Type System"],
+    link: "https://starlang.dev",
+    linkLabel: "starlang.dev",
+    imageCount: 3,
+  },
+  {
+    id: "02",
+    slug: "sworn",
+    title: "Sworn",
+    subtitle: "The AI accountability framework",
+    description: (
+      <>
+        A framework for observing silent errors in AI agent executions at scale.
+        Developers define behavioural contracts and a separate verifier evaluates
+        deliverables against them. Features semantic, deterministic and{" "}
+        <L href="https://en.wikipedia.org/wiki/Natural_language_inference">
+          NLI
+        </L>{" "}
+        verifiers, plus a contract coverage metric to surface unmonitored
+        behaviours.
+      </>
+    ),
+    tags: ["AI Agents", "Verification", "pip library"],
+    link: "https://github.com/kavishsathia/sworn",
+    linkLabel: "github",
+    imageCount: 3,
+  },
+  {
+    id: "03",
+    slug: "gauntlet",
+    title: "Gauntlet",
+    subtitle: "Adversarial fuzz-testing for AI agents",
+    description: (
+      <>
+        An autonomous adversarial agent that intercepts your AI agent&apos;s
+        tool calls in real time, creatively manipulating results to discover
+        security flaws like{" "}
+        <L href="https://en.wikipedia.org/wiki/Prompt_injection">
+          prompt injection
+        </L>
+        , data exfiltration, and content poisoning. Uses a closed
+        hypothesize-prove-store cycle with short-term and long-term memory
+        circuits built entirely within{" "}
+        <L href="https://www.elastic.co/elasticsearch/agent-builder">
+          Elasticsearch Agent Builder
+        </L>
+        .
+      </>
+    ),
+    tags: ["Elasticsearch", "ES|QL", "Python", "OpenAI Agents SDK"],
+    link: "https://github.com/kavishsathia/gauntlet",
+    linkLabel: "github",
+    imageCount: 3,
+  },
+  {
+    id: "04",
+    slug: "oz",
+    title: "Oz",
+    subtitle: "An AI operating system built under 24 hours",
+    description: (
+      <>
+        An OS where software is an extendable primitive. Users generate, modify
+        and publish applications via natural language, with{" "}
+        <L href="https://developers.google.com/drive">Google Drive</L> as the
+        backing filesystem. Features an OzSDK mimicking Linux syscalls. Top 9 at{" "}
+        <L href="https://hacknroll.nushackers.org">Hack&amp;Roll 2026</L>.
+      </>
+    ),
+    tags: ["Next.js", "PostgreSQL", "OpenAI"],
+    link: "https://github.com/kavishsathia/oz",
+    linkLabel: "github",
+    imageCount: 3,
+  },
+];
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Header */}
+      <header className="mx-auto max-w-2xl px-6 py-24 sm:py-32">
+        <h1 className="font-mono text-sm tracking-wider text-muted mb-6">
+          KAVISH SATHIA
+        </h1>
+        <p className="text-lg leading-relaxed max-w-lg">
+          Computer Science at{" "}
+          <a
+            href="https://nus.edu.sg"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 hover:text-muted transition-colors"
+          >
+            NUS
+          </a>
+          . I&apos;m working toward the{" "}
+          <a
+            href="https://en.wikipedia.org/wiki/DWIM"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 hover:text-muted transition-colors"
+          >
+            DWIM
+          </a>{" "}
+          (Do What I Mean) compiler: building the tools that close the gap
+          between what a human means and what a machine does.
+        </p>
+        <div className="mt-6 flex gap-6 font-mono text-sm text-muted">
+          <a
+            href="mailto:kavishwer@u.nus.edu"
+            className="hover:text-foreground transition-colors"
+          >
+            email
+          </a>
+          <a
+            href="https://linkedin.com/in/kavish-sathia/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-foreground transition-colors"
+          >
+            linkedin
+          </a>
+          <a
+            href="https://github.com/kavishsathia"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-foreground transition-colors"
+          >
+            github
+          </a>
+        </div>
+      </header>
+
+      {/* Projects */}
+      <section>
+        <div className="mx-auto max-w-2xl px-6 mb-12">
+          <h2 className="font-mono text-sm tracking-wider text-muted">
+            SELECTED WORK
+          </h2>
+        </div>
+
+        <div className="flex flex-col">
+          {projects.map((project, index) => {
+            const isEven = index % 2 === 0;
+
+            return (
+              <div
+                key={project.id}
+                className={`flex flex-col md:min-h-[500px] ${
+                  isEven ? "md:flex-row" : "md:flex-row-reverse"
+                }`}
+              >
+                {/* Text */}
+                <div className="flex-1 flex items-center px-6 py-8 md:py-12 md:px-16 lg:px-24">
+                  <div className={`max-w-md ${isEven ? "md:ml-auto" : ""}`}>
+                    <div className="flex items-baseline gap-4 mb-3">
+                      <span className="font-mono text-sm text-muted">
+                        {project.id}
+                      </span>
+                      <h3 className="text-xl md:text-2xl font-medium">
+                        {project.title}
+                      </h3>
+                    </div>
+                    <p className="text-sm text-muted mb-3 md:mb-4 font-mono">
+                      {project.subtitle}
+                    </p>
+                    <p className="text-sm md:text-base leading-relaxed text-accent mb-4 md:mb-6">
+                      {project.description}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                      {project.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="font-mono text-xs text-muted border border-border px-2 py-1"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {project.link && (
+                        <>
+                          <span className="text-border">|</span>
+                          <a
+                            href={project.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-mono text-xs text-muted hover:text-foreground transition-colors"
+                          >
+                            {project.linkLabel} →
+                          </a>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Carousel — diagonal clip only on md+ */}
+                <div
+                  className={`relative overflow-hidden bg-neutral-900 h-64 md:h-auto md:flex-1 md:min-h-[400px] ${
+                    isEven ? "clip-left" : "clip-right"
+                  }`}
+                >
+                  <Carousel
+                    slug={project.slug}
+                    imageCount={project.imageCount}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="mx-auto max-w-2xl px-6 py-16">
+        <div className="pt-8 border-t border-border flex items-center justify-between">
+          <p className="font-mono text-xs text-muted">
+            4.96/5.0 GPA · 3x Dean&apos;s List · 4x Hackathon Wins
           </p>
+          <span className="text-muted text-lg">∎</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </footer>
     </div>
   );
 }

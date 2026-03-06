@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kavish Sathia
 
-## Getting Started
+Computer Science at [NUS](https://nus.edu.sg). I'm working toward the [DWIM](https://en.wikipedia.org/wiki/DWIM) (Do What I Mean) compiler: building the tools that close the gap between what a human means and what a machine does.
 
-First, run the development server:
+[email](mailto:kavishwer@u.nus.edu) · [linkedin](https://linkedin.com/in/kavish-sathia/) · [github](https://github.com/kavishsathia)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Selected Work
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 01 · Star
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**A programming language that compiles to WebAssembly**
 
-## Learn More
+A statically-typed programming language that compiles to [WebAssembly](https://webassembly.org), facilitating seamless cross-language library development. Write once, generate idiomatic APIs for Python, JavaScript, Rust, and Go. No more parallel SDK maintenance.
 
-To learn more about Next.js, take a look at the following resources:
+`Compiler` `WebAssembly` `Type System` | [starlang.dev](https://starlang.dev)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 02 · Sworn
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**The AI accountability framework**
 
-## Deploy on Vercel
+A framework for observing silent errors in AI agent executions at scale. Developers define behavioural contracts and a separate verifier evaluates deliverables against them. Features semantic, deterministic and [NLI](https://en.wikipedia.org/wiki/Natural_language_inference) verifiers, plus a contract coverage metric to surface unmonitored behaviours.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`AI Agents` `Verification` `pip library` | [github](https://github.com/kavishsathia/sworn)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 03 · Gauntlet
+
+**Adversarial fuzz-testing for AI agents**
+
+An autonomous adversarial agent that intercepts your AI agent's tool calls in real time, creatively manipulating results to discover security flaws like [prompt injection](https://en.wikipedia.org/wiki/Prompt_injection), data exfiltration, and content poisoning. Uses a closed hypothesize-prove-store cycle with short-term and long-term memory circuits built entirely within [Elasticsearch Agent Builder](https://www.elastic.co/elasticsearch/agent-builder).
+
+`Elasticsearch` `ES|QL` `Python` `OpenAI Agents SDK` | [github](https://github.com/kavishsathia/gauntlet)
+
+### 04 · Oz
+
+**An AI operating system built under 24 hours**
+
+An OS where software is an extendable primitive. Users generate, modify and publish applications via natural language, with [Google Drive](https://developers.google.com/drive) as the backing filesystem. Features an OzSDK mimicking Linux syscalls. Top 9 at [Hack&Roll 2026](https://hacknroll.nushackers.org).
+
+`Next.js` `PostgreSQL` `OpenAI` | [github](https://github.com/kavishsathia/oz)
+
+---
+
+4.96/5.0 GPA · 3x Dean's List · 4x Hackathon Wins ∎
