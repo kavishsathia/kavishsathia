@@ -12,6 +12,8 @@ Computer Science at [NUS](https://nus.edu.sg). I'm working toward the [DWIM](htt
 
 **A programming language that compiles to WebAssembly**
 
+<p align="center"><img src="public/projects/star/0.png" width="80%" /></p>
+
 A statically-typed programming language that compiles to [WebAssembly](https://webassembly.org), facilitating seamless cross-language library development. Write once, generate idiomatic APIs for Python, JavaScript, Rust, and Go. No more parallel SDK maintenance.
 
 `Compiler` `WebAssembly` `Type System` | [starlang.dev](https://starlang.dev)
@@ -19,6 +21,8 @@ A statically-typed programming language that compiles to [WebAssembly](https://w
 ### 02 · Sworn
 
 **The AI accountability framework**
+
+<p align="center"><img src="public/projects/sworn/0.png" width="80%" /></p>
 
 A framework for observing silent errors in AI agent executions at scale. Developers define behavioural contracts and a separate verifier evaluates deliverables against them. Features semantic, deterministic and [NLI](https://en.wikipedia.org/wiki/Natural_language_inference) verifiers, plus a contract coverage metric to surface unmonitored behaviours.
 
@@ -28,6 +32,8 @@ A framework for observing silent errors in AI agent executions at scale. Develop
 
 **Adversarial fuzz-testing for AI agents**
 
+<p align="center"><img src="public/projects/gauntlet/0.png" width="80%" /></p>
+
 An autonomous adversarial agent that intercepts your AI agent's tool calls in real time, creatively manipulating results to discover security flaws like [prompt injection](https://en.wikipedia.org/wiki/Prompt_injection), data exfiltration, and content poisoning. Uses a closed hypothesize-prove-store cycle with short-term and long-term memory circuits built entirely within [Elasticsearch Agent Builder](https://www.elastic.co/elasticsearch/agent-builder).
 
 `Elasticsearch` `ES|QL` `Python` `OpenAI Agents SDK` | [github](https://github.com/kavishsathia/gauntlet)
@@ -35,6 +41,8 @@ An autonomous adversarial agent that intercepts your AI agent's tool calls in re
 ### 04 · Oz
 
 **An AI operating system built under 24 hours**
+
+<p align="center"><img src="public/projects/oz/0.png" width="80%" /></p>
 
 An OS where software is an extendable primitive. Users generate, modify and publish applications via natural language, with [Google Drive](https://developers.google.com/drive) as the backing filesystem. Features an OzSDK mimicking Linux syscalls. Top 9 at [Hack&Roll 2026](https://hacknroll.nushackers.org).
 
