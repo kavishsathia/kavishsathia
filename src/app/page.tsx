@@ -195,6 +195,12 @@ export default function Home() {
           >
             github
           </a>
+          <a
+            href="/writing"
+            className="hover:text-foreground transition-colors"
+          >
+            writing
+          </a>
         </div>
       </header>
 
