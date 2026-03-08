@@ -3,7 +3,46 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Image from "next/image";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
+import mermaid from "mermaid";
+
+mermaid.initialize({
+  startOnLoad: false,
+  theme: "base",
+  themeVariables: {
+    primaryColor: "#e5e5e0",
+    primaryTextColor: "#1a1a1a",
+    primaryBorderColor: "#6b6b6b",
+    lineColor: "#6b6b6b",
+    secondaryColor: "#fafaf8",
+    tertiaryColor: "#fafaf8",
+    background: "#fafaf8",
+    mainBkg: "#e5e5e0",
+    nodeBorder: "#6b6b6b",
+    fontFamily: "var(--font-geist-sans)",
+    fontSize: "14px",
+  },
+});
+
+let mermaidCounter = 0;
+
+function Mermaid({ chart }: { chart: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [svg, setSvg] = useState("");
+
+  useEffect(() => {
+    const id = `mermaid-${mermaidCounter++}`;
+    mermaid.render(id, chart).then(({ svg }) => setSvg(svg));
+  }, [chart]);
+
+  return (
+    <div
+      ref={containerRef}
+      className="my-6 flex justify-center"
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  );
+}
 
 function slugify(text: string) {
   return text
@@ -57,6 +96,13 @@ export default function Markdown({ content }: { content: string }) {
               />
             </span>
           );
+        },
+        pre: ({ children }) => {
+          const child = children as React.ReactElement<{ className?: string; children?: ReactNode }>;
+          if (child?.props?.className === "language-mermaid") {
+            return <Mermaid chart={String(child.props.children).trim()} />;
+          }
+          return <pre>{children}</pre>;
         },
         a: ({ href, children }) => (
           <a
