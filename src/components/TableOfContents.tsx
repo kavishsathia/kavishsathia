@@ -49,7 +49,7 @@ export default function TableOfContents({ content }: { content: string }) {
   if (headings.length === 0) return null;
 
   return (
-    <nav className="hidden xl:block fixed left-[max(2rem,calc((100vw-42rem)/2-18rem))] top-32 w-64">
+    <nav className="hidden xl:block fixed left-[max(2rem,calc((100vw-42rem)/2-18rem))] top-32 bottom-8 w-64 overflow-y-auto toc-scroll">
       <p className="font-mono text-sm tracking-wider text-muted mb-5">
         CONTENTS
       </p>

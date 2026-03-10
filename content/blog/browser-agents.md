@@ -236,8 +236,94 @@ And it worked nicely! Notice how only the Toyota tab is open because the other t
 
 # Phase 3: The Dashboard
 
-Now that we have many agents running at the same time, it will be wise for us to have a single dashboard to see everything that's going on. The goal will be to track exactly which tabs are open and show them on the dashboard.
+Now that we have many agents running at the same time, it will be wise for us to have a **single dashboard** to see everything that's going on. The goal will be to track exactly which tabs are open and show them on the dashboard.
 
 ![Multiple tabs dashboard](browser-agents-5.png)
 
-This is the outcome and I'm honestly really happy with it. At this point, it genuinely feels like an improvement to my productivity because I am no longer waiting for one agent, but watching many agents execute at a much faster rate on multiple windows.
+This is the outcome and I'm honestly really happy with it. At this point, it genuinely feels like an **improvement to my productivity** because I am no longer waiting for one agent, but watching **many agents execute at a much faster rate** on multiple windows.
+
+# Phase 4: Refinement
+
+Before I move on to adding the synchronization layer, it helps to make sure our **basic agent is really good on it's own**. I'll be running a few tests and discovering blind spots in implementation.
+
+## Test 1: Adding Skills to Linkedin
+
+![Linkedin Skills](browser-agents-6.png)
+
+Throwback to the problem that started it all: adding skills on Linkedin. It worked as intended but the executor agent was reaching its step limit which **at this point I set at 15**. I changed it to 100, and made my prompt clearer to **terminate if the agent is confidently done or if it can't progress any further**.
+
+## Test 2: Seeing How it Fares Against Much Worse UI
+
+Linkedin is still alright, but I want to see how far I can push the resilience of the agent. I tried it out on userinyerface.com.
+
+![User Inyerface](browser-agents-7.png)
+
+Honestly, not as bad as expected, it managed to get past the front page, accepted cookies, closed the timers, and fill out the password and email. It did **forget to uncheck the terms and conditions** checkbox, but I'll let that slide.
+
+What intrigued me was that this architecture **naturally leads to retries** when the agent faces an error. Then the executor agent **spawns a new executor** to do the job. This means I will have to think about **idempotency and retry limits** in the future.
+
+The first execution of the agent failed because the executor agent returned 3 coordinates for its bounding box instead of 4. Weird, but I just **added some validation** to instruct it to return 4 next time this happens.
+
+## Test 3: Mundane Mann
+
+As powerful as the agent seems, can it do the most mundane task repeatedly.
+
+When testing this out, I found another problem with the system. I was testing it out on Google Sheets and asked it to fill the first 20 rows of the first column with the number 67.
+
+![Google Sheets](browser-agents-8.png)
+
+Found it funny, but it didn't work. Most likely because Google Sheets **doesn't use normal textboxes and input fields**. By changing the input to go through the **Chrome DevTools Protocol**, I managed to get it to work.
+
+But I found something even more interesting by accident when I let the agent run. It got **the cell positions all wrong**. When I asked it to click on B5, it clicked on C8. So, to isolate the incident, I tested it with the [demo app from Simon Willison](https://simonwillison.net/2024/Aug/26/gemini-bounding-box-visualization/).
+
+![Google Sheets](browser-agents-9.png)
+
+And voila, it was actually failing. So, I tried to **increase my screenshot resolution** to see if it'll help.
+
+![Google Sheets](browser-agents-10.png)
+
+It was really **much more reasonable** now. There were slight hiccups but I wrote it off to the fact that the **CDP banner kept appearing at the top**, messing with the screenshot coordinates. So, I just attached the debugger throughout the session so that the screenshot coordinates don't change.
+
+![Google Sheets](browser-agents-11.png)
+
+This time I was really impressed. The extractor agent noticed that it could have more than one agent execute the task, so it **split the job into two agents**, and they started filling out the first column with the number 67. And the **executors accuracy was much higher too**.
+
+**Satisfactory performance for now.**
+
+## Test 4: Creative Work
+
+Let's see if it can make slides for me. I wanted to make a **slide on astronauts**.
+
+![Google Slides](browser-agents-12.png)
+
+Without any instructions to search, it **decided to search up 5 interesting facts about astronauts**. I applaude that agency. It spawned another agent to set up the slide with a title.
+
+After these two were done, the extractor spawned another executor to fill in the details into the slide, which it did.
+
+![Google Slides](browser-agents-13.png)
+
+Quality of work is **quite horrible**, but it is functional so I can instruct it to be more creative.
+
+## Test 5: CAPTCHA
+
+Finally, I wanted to see if the agent can be stopped by a CAPTCHA. I used [this website](https://neal.fun/not-a-robot/).
+
+![CAPTCHA](browser-agents-14.png)
+
+It got really close, but still missed those two squares. While the bounding boxes identified the word "STOP", they **didn't identify the remaining red portion of the sign on top**.
+
+With **better prompting** though ("don't make any mistakes"), the agent was able to pass that level and **got stuck** on the next one instead.
+
+![CAPTCHA](browser-agents-15.png)
+
+Honestly, this one's **quite tough**, so I would say the performance (with proper prompting) is **satisfactory**. I will **come back to this later**.
+
+# Phase 5: The Synchronization
+
+The Gemini Live API allowed us to make the agent speak only when it's its turn. This is **significantly harder** to do with regular non-realtime agents for the following reasons:
+
+1. If we simply used a **mutex method** where only a single agent could speak at a time, then other agents would be waiting to speak while **not doing meaningful work**.
+
+2. If we let the agent **queue its messages**, and read it out one by one to the user, it will cause **desynchronisation** from what the agent is actually doing to what its saying.
+
+3. If we let the agent to **queue its intent to speak** instead, then we can circumvent problem 2 because now the agent will only actually generate its message when it's its turn to speak. This is the **preemptive multiplexer**. There is one problem though: unlike the Live API, we can't tell the agent that it's its turn to speak.
