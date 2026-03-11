@@ -320,6 +320,8 @@ Honestly, this one's **quite tough**, so I would say the performance (with prope
 
 # Phase 5: The Synchronization
 
+## Agents Talking to Each Other
+
 The Gemini Live API allowed us to make the agent speak only when it's its turn. This is **significantly harder** to do with regular non-realtime agents for the following reasons:
 
 1. If we simply used a **mutex method** where only a single agent could speak at a time, then other agents would be waiting to speak while **not doing meaningful work**.
@@ -327,3 +329,67 @@ The Gemini Live API allowed us to make the agent speak only when it's its turn. 
 2. If we let the agent **queue its messages**, and read it out one by one to the user, it will cause **desynchronisation** from what the agent is actually doing to what its saying.
 
 3. If we let the agent to **queue its intent to speak** instead, then we can circumvent problem 2 because now the agent will only actually generate its message when it's its turn to speak. This is the **preemptive multiplexer**. There is one problem though: unlike the Live API, we can't tell the agent that it's its turn to speak.
+
+4. To remediate that we can let the agent know that the **spotlight** is on itself: everytime we return a tool call result, we also show it the **recent conversations** that took place and whether the agent has **the ability to speak** in the current window. We decide if the agent is the current one to speak by **dequeueing from the multiplexer queue**. One more problem though: if a tool call is long running (quite rare for this system), then the agent would **block the entire queue** because the agent itself is blocked from speaking.
+
+5. A minor iteration over the system would be to have a **time-to-live for each spotlight session**, if the agent doesn't speak within a **window of 10 seconds**, move the spotlight to the next agent.
+
+![Pipeline](browser-agents-16.png)
+
+Thanks to the fact that we would also be playing the agent's messages as audio, we can see this as a **pipeline** (akin to a CPU pipeline). The spotlight is not a time when nothing is happening, but it's a **time when the previous message is playing**. To put it more precisely, here's the duration of a spotlight: `max(previous_message, 10)`. 10 seconds is just an **arbitrary choice** here, and can be changed based on the experience.
+
+Also notice the yellow part: that represents **the time between spotlight change and the agent generating a message**. This is important because this is represent the **responsivity of the agent**. There are 2 factors that can dampen the responsivity:
+
+1. **Tool call blocking** the agent from knowing if it's on spotlight. Solution: make tool calls non-blocking or faster.
+
+2. **Agent decides to ignore the spotlight**. This is avoidable with proper prompting.
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant M as Multiplexer
+    participant E1 as Executor 1
+    participant E2 as Executor 2
+    participant E3 as Executor 3
+
+    E1->>M: Intent to speak
+    E3->>M: Intent to speak
+    E2->>M: Intent to speak
+
+    Note over M: Queue: [E1, E3, E2]
+
+    M->>E1: Spotlight ON
+    E1->>U: Message (audio)
+    Note over E1: Speaking...
+    Note over E2,E3: Still working
+
+    M->>E3: Spotlight ON
+    E3->>U: Message (audio)
+    Note over E3: Speaking...
+
+    M->>E2: Spotlight ON
+    E2->>U: Message (audio)
+    Note over E2: Speaking...
+```
+
+Here's a sequence diagram of how everything flows together.
+
+## The Results
+
+I started with a **simple test** to see if they can hear each other in the first place. This was my prompt:
+
+> three executors, one opens google and speaks hello, another opens google, and searches for toyota, and clicks on the first link, and only when it hears another executor say hello, will reeply with hello there, another goes to wikipedia.org, finds a random article there, then scrolls to the third section, and only says whats up when he hears hello and hello there from others
+
+And it worked! The agents spoke after one another, as you can kinda see from the logs below. The **voices actually play out** and the next agent **generates its message during that period**. There is **some gap** between the messages but it's because the messages I asked for are **quite short**.
+
+![Speaking](browser-agents-17.png)
+
+Now I want to test if the system has the **anti-race condition properties** I promised. So I asked all of them to **open google and say "hello" before quitting**.
+
+The agents speak one by one and quit one by one. It was **working correctly**! One problem I noticed though is the fact that the agents **flood the mux queue** with speaking requests, even though they already have requests in. So I made it such that if an **agent already has a request in the queue, the later requests become a no-op**.
+
+I wanted to test out if they can collaborate to add **unique** skills on Linkedin (it's a benchmark at this point).
+
+![Collaborating](browser-agents-18.png)
+
+It's honestly **kinda surreal**, the extractor split the work into **two agents** (on my request) and asked them to **talk to each other** and they both talked and the first agent added "Python" and the second one added "Microservices" and "Kubernetes". The crazy thing is I asked the extractor to add 3 skills and the second agent **decided to add 2 skills instead of 1 so that they can meet the 3 skills needed**. Crazy!

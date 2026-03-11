@@ -93,6 +93,7 @@ export default function Markdown({ content }: { content: string }) {
                 width={800}
                 height={450}
                 className="w-full rounded"
+                unoptimized
               />
             </span>
           );
