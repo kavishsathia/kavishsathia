@@ -393,3 +393,74 @@ I wanted to test out if they can collaborate to add **unique** skills on Linkedi
 ![Collaborating](browser-agents-18.png)
 
 It's honestly **kinda surreal**, the extractor split the work into **two agents** (on my request) and asked them to **talk to each other** and they both talked and the first agent added "Python" and the second one added "Microservices" and "Kubernetes". The crazy thing is I asked the extractor to add 3 skills and the second agent **decided to add 2 skills instead of 1 so that they can meet the 3 skills needed**. Crazy!
+
+And the more interesting thing: the design makes it an **invariant** that the agent **knows every prior message** before generating its message. It's given all the **recent messages and told that it's in the spotlight** within the **same tool call result**. Meaning, by the time it could generate a message (spotlight on itself), **every prior message is within context.**
+
+## Hurdle 5A
+
+I told the agents to generate me a poem, twist is: **each line is from one agent**, and I want 4 lines in total, and it should **come one by one**. So they should sync with each other and rhyme on top of that.
+
+Problem is the agents **expressed their intent to speak very early on** (at the wrong time), and this led to the queue itself being **ordered wrongly**. I explicitly wanted Agent 1 to do line 1, Agent 2 to do line 2 etc. But since the queue wasn't in this order, I had to **wait for the TTL to expire to hear the next agent speak**. Not too good.
+
+## Iteration 5A
+
+What actually happens in a **Zoom meeting**? People **don't queue up to speak**. That is way too civil. We usually **claim our spotlight**. When we hear silence, we step in to speak.
+
+And so using that as an inspiration, I **removed the concept of a queue** (the multiplexer and pipeline still exist), but the change is that the agents **no longer have express their intent to speak**. They just have to **speak when no one else is**, and it works on a **FCFS basis**, if the agent tries to speak over another agent, it will be rejected. **The spotlight is claimed, not given**.
+
+I had the agents do the same thing again and it **worked so much better**, I even had them **discuss the meaning of life** and sat there listening to some philosophical stuff.
+
+# Phase 6: The Experience
+
+I wanted to work on preemption but I am at the library today so I can't test the audio out. So, I'll work on the user experience instead.
+
+## Click, click, type, click
+
+That's the current process, you **click** on the extension, you **click** on the textbox, you **type** in your prompt and you **click** on Run.
+
+It **doesn't feel native** to the browser. Part of me wanted to just **create a new browser** based on Chromium but that'll be a tall order.
+
+To **remove the first click**, I made it such that every new tab opens up Vroom using `chrome_url_overrides`.
+
+![Patched on](browser-agents-19.png)
+
+Certainly an **improvement**, but Vroom does look kinda **patched on**. Doesn't feel native.
+Apparently (according to Google), there is **no way of knowing what color the user has chosen** in their color settings, so we cannot adapt to that.
+
+And I realised that **Chrome's omnibox could literally just be Vroom's prompt box**. You could type your instructions there and it'll execute. Unfortunately though, Chrome **doesn't allow you to modify that behaviour** unless you provide a prefix.
+
+So, I **decided to build my own browser using Electron** (at least not from scratch). Since **most of the logic was already there**, I offloaded this crazy work to my **coding agent, Claude**. It came back with this within 5 minutes.
+
+![Not patched on](browser-agents-20.png)
+
+What an excellent era to be coding in! The **proof-of-concept is there** but for people to actually use it, the **basics of the browser have to be added** (e.g. tabs, navigation etc.).
+
+Claude also told me that I can have **live browser views on each agent's grid** instead of static screenshots. So now you could **literally watch a Youtube video** on one grid (the agent can't though). I let it do that, and it worked!
+
+With a bit more changes with the **user interface**, especially with the sidebar, I got it to look really nice:
+
+![Full On Browser](browser-agents-21.png)
+
+Even managed to login to Github on this browser!
+
+![Github](browser-agents-22.png)
+
+I also realised that there was a core issue with the experience: **users can't make an agent work on an existing tab**. So, I made it such that you can **drag and drop existing tabs** into the prompt bar so that the extractor could **attach an agent** to that tab instead of creating a new tab.
+
+Another thing this allows is also for the extractor to attach an agent on an **existing tab for a failed task** (given a previous agent failed on that tab). The new executor can **retry on the same tab now** (solving our **idempotency** problem partially).
+
+At this point, I realised I had homework that was due in 2 hours but this work was way too fun so I just had **my agent answer the quiz on my behalf**.
+
+![Agent answering Canvas](browser-agents-23.png)
+
+# Phase 7: Preemption
+
+Preemption in our architecture is **quite simple**, just treat the user as **another agent**+. The bigger problem is: **how to make sure the agent doesn't hear itself and think it's the user**. There are existing solutions to this known as **echo cancellation**, but honestly I just decided to have an **unmute button** that stops the agent properly. You wouldn't want **unwanted sounds interrupting your agents** anyways.
+
+![Agent course correcting in the middle](browser-agents-24.png)
+
+I made the agent initially find **my most popular repo** on Github, but during the execution I unmuted myself and asked it **to find the most recent repo**. It did as it was told: it found the most recent repo. That's great!
+
+But notice that there are **3 tabs** on the sidebar. Each time the agent **course corrected**, it did **something that the extractor didn't intend it to do**. The executor asked it to find the most popular repo, and it didn't do that. So my course correction shouldn't apply to just the executor **but also the extractor**. When the **tool calls return** for the extractor, I must piggyback and **include my corrections in the result**.
+
+And that worked! The **extractor no longer spawns another executor**.
