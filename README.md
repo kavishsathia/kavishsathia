@@ -60,4 +60,4 @@ An OS where software is an extendable primitive. Users generate, modify and publ
 
 ---
 
-4.96/5.0 GPA · 3x Dean's List · 4x Hackathon Wins ∎
+4.94/5.0 GPA · 3x Dean's List · 7x Hackathon Wins ∎

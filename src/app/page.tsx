@@ -287,7 +287,7 @@ export default function Home() {
       <footer className="mx-auto max-w-2xl px-6 py-16">
         <div className="pt-8 border-t border-border flex items-center justify-between">
           <p className="font-mono text-xs text-muted">
-            4.96/5.0 GPA · 3x Dean&apos;s List · 4x Hackathon Wins
+            4.94/5.0 GPA · 3x Dean&apos;s List · 7x Hackathon Wins
           </p>
           <span className="text-muted text-lg">∎</span>
         </div>
