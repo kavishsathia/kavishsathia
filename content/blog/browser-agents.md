@@ -410,7 +410,7 @@ And so using that as an inspiration, I **removed the concept of a queue** (the m
 
 I had the agents do the same thing again and it **worked so much better**, I even had them **discuss the meaning of life** and sat there listening to some philosophical stuff.
 
-# Phase 6: The Experience
+# Phase 6: The Visual Experience
 
 I wanted to work on preemption but I am at the library today so I can't test the audio out. So, I'll work on the user experience instead.
 
