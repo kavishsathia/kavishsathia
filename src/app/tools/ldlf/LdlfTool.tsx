@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import mermaid from "mermaid";
 import {
   EngineUnavailableError,
@@ -9,6 +9,9 @@ import {
   translate,
   type Automaton,
 } from "@/lib/ldlf/engine";
+import { enumerateTraces, formatTrace } from "@/lib/ldlf/traces";
+
+const MAX_REPEAT = 2;
 
 mermaid.initialize({
   startOnLoad: false,
@@ -71,6 +74,11 @@ export default function LdlfTool() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const traces = useMemo(
+    () => (automaton ? enumerateTraces(automaton, { maxRepeat: MAX_REPEAT }) : null),
+    [automaton],
+  );
 
   // Fetch the wasm as soon as the page is interactive so the first translate
   // doesn't pay for the download.
@@ -177,6 +185,51 @@ export default function LdlfTool() {
           )}
         </div>
       </div>
+
+      {/* Accepted traces */}
+      {traces && (
+        <div>
+          <div className="flex items-baseline justify-between gap-4">
+            <span className="font-mono text-xs tracking-wider text-muted">
+              ACCEPTED TRACES
+            </span>
+            <span className="font-mono text-xs text-muted">
+              loops unrolled up to {MAX_REPEAT}×
+            </span>
+          </div>
+
+          <div className="mt-2 border border-border px-4 py-3">
+            {traces.traces.length === 0 ? (
+              <p className="font-mono text-sm text-muted py-4 text-center">
+                unsatisfiable — no trace is accepted
+              </p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {traces.traces.map((trace, i) => (
+                  <li
+                    key={i}
+                    className="font-mono text-xs py-2 overflow-x-auto whitespace-nowrap"
+                  >
+                    {formatTrace(trace)}
+                  </li>
+                ))}
+                {traces.truncated && (
+                  <li className="font-mono text-xs py-2 text-muted">…</li>
+                )}
+              </ul>
+            )}
+          </div>
+
+          {traces.truncated && traces.traces.length > 0 && (
+            <p className="mt-2 text-xs text-muted leading-relaxed">
+              Cut off where a loop would repeat more than {MAX_REPEAT} times.
+              Traces are listed shortest first; each step is the edge condition
+              taken, and{" "}
+              <code className="font-mono">ε</code> is the empty trace.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
