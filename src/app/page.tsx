@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Carousel from "@/components/Carousel";
 import { ReactNode } from "react";
 
@@ -195,12 +196,18 @@ export default function Home() {
           >
             github
           </a>
-          <a
+          <Link
             href="/writing"
             className="hover:text-foreground transition-colors"
           >
             writing
-          </a>
+          </Link>
+          <Link
+            href="/tools"
+            className="hover:text-foreground transition-colors"
+          >
+            tools
+          </Link>
         </div>
       </header>
 
