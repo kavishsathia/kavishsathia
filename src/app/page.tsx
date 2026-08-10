@@ -173,7 +173,7 @@ export default function Home() {
           (Do What I Mean) compiler: building the tools that close the gap
           between what a human means and what a machine does.
         </p>
-        <div className="mt-6 flex gap-6 font-mono text-sm text-muted">
+        <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 font-mono text-sm text-muted">
           <a
             href="mailto:kavishwer@u.nus.edu"
             className="hover:text-foreground transition-colors"
