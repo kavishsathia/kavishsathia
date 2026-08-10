@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# z3 wasm (copied from node_modules by scripts/copy-z3.mjs on postinstall)
+/public/z3/

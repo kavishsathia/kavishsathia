@@ -76,10 +76,20 @@ export function preload(): void {
   });
 }
 
-export async function translate(
+/** The letter-level automaton, before edges are folded into boolean labels. */
+export type RawAutomaton = {
+  /** Proposition names in bit order: bit i of a mask is variables[i]. */
+  variables: string[];
+  initial: number;
+  states: number;
+  accepting: number[];
+  transitions: { from: number; to: number; mask: number }[];
+};
+
+export async function translateRaw(
   formula: string,
   logic: "ldlf" | "ltlf" = "ldlf",
-): Promise<Automaton> {
+): Promise<RawAutomaton> {
   const lydia = await loadModule();
 
   let raw: RawResult;
@@ -90,6 +100,14 @@ export async function translate(
   }
 
   if (!raw.ok) throw new TranslationError(raw.error);
+  return raw;
+}
+
+export async function translate(
+  formula: string,
+  logic: "ldlf" | "ltlf" = "ldlf",
+): Promise<Automaton> {
+  const raw = await translateRaw(formula, logic);
 
   const name = (i: number) => `q${i}`;
 

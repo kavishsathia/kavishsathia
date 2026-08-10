@@ -1,7 +1,33 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  turbopack: {
+    root: __dirname,
+  },
+  async headers() {
+    return [
+      {
+        // Z3's threaded wasm build needs SharedArrayBuffer, which browsers
+        // only enable in cross-origin-isolated documents. Scoped to the one
+        // tool that uses it so the rest of the site is unaffected.
+        source: "/tools/ldlf-mt",
+        headers: [
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+        ],
+      },
+      {
+        // The pthread workers re-fetch z3-built.js as their own script; a
+        // worker script inherits the page's COEP, so its response must carry
+        // these headers too or Chrome blocks it (ERR_BLOCKED_BY_RESPONSE).
+        source: "/z3/:path*",
+        headers: [
+          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+          { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

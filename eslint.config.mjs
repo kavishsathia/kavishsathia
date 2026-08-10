@@ -12,8 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Emscripten-generated glue for the LDLf tool.
+    // Emscripten-generated glue for the LDLf tools.
     "public/wasm/**",
+    "public/z3/**",
   ]),
 ]);
 

@@ -82,30 +82,61 @@ function primeImplicants(minterms: number[], varCount: number): Implicant[] {
   return primes;
 }
 
-function render(imp: Implicant, vars: string[]): string {
+function render(
+  imp: Implicant,
+  vars: string[],
+  renderAtom: (varIndex: number, positive: boolean) => string,
+): string {
   const parts: string[] = [];
   for (let i = 0; i < vars.length; i++) {
     if (imp.care & (1 << i)) {
-      parts.push((imp.bits & (1 << i) ? "" : "!") + vars[i]);
+      parts.push(renderAtom(i, (imp.bits & (1 << i)) !== 0));
     }
   }
   return parts.length === 0 ? "true" : parts.join(" & ");
 }
 
+export type LabelOptions = {
+  /**
+   * Letters that can never occur (e.g. unsatisfiable predicate combinations).
+   * Treated as don't-cares: implicants may cover them for free, which
+   * shortens labels, and they don't count toward the "covers everything"
+   * check.
+   */
+  dontCares?: number[];
+  /** How to print one atom; defaults to `vars[i]` / `!vars[i]`. */
+  renderAtom?: (varIndex: number, positive: boolean) => string;
+  /** Labels longer than this collapse to a count. */
+  maxLength?: number;
+};
+
 /**
  * Turns a set of letters into the shortest boolean label we can cheaply find.
- * Returns "true" when the set covers every letter.
+ * Returns "true" when the set covers every letter that can occur.
  */
-export function labelFor(masks: number[], vars: string[]): string {
+export function labelFor(
+  masks: number[],
+  vars: string[],
+  options: LabelOptions = {},
+): string {
   const varCount = vars.length;
   if (varCount === 0) return "true";
 
-  const total = 1 << varCount;
-  const unique = Array.from(new Set(masks)).sort((a, b) => a - b);
-  if (unique.length === 0) return "false";
-  if (unique.length === total) return "true";
+  const renderAtom =
+    options.renderAtom ?? ((i: number, pos: boolean) => (pos ? "" : "!") + vars[i]);
+  const maxLength = options.maxLength ?? 60;
+  const dontCares = new Set(options.dontCares ?? []);
 
-  const primes = primeImplicants(unique, varCount);
+  const total = 1 << varCount;
+  const unique = Array.from(new Set(masks))
+    .filter((m) => !dontCares.has(m))
+    .sort((a, b) => a - b);
+  if (unique.length === 0) return "false";
+  if (unique.length === total - dontCares.size) return "true";
+
+  // Don't-cares join the merge phase (they let implicants grow) but never
+  // need to be covered themselves.
+  const primes = primeImplicants([...unique, ...dontCares], varCount);
 
   // Greedy set cover over the minterms we still need.
   const remaining = new Set(unique);
@@ -131,6 +162,6 @@ export function labelFor(masks: number[], vars: string[]): string {
 
   if (chosen.length === 0) return "…";
 
-  const label = chosen.map((c) => render(c, vars)).join(" | ");
-  return label.length > 60 ? `${chosen.length} letters` : label;
+  const label = chosen.map((c) => render(c, vars, renderAtom)).join(" | ");
+  return label.length > maxLength ? `${chosen.length} letters` : label;
 }

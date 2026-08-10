@@ -21,6 +21,15 @@ export const tools: Tool[] = [
       "Write a formula in Linear Dynamic Logic over finite traces and watch it become a deterministic finite automaton. Runs entirely client-side — the Lydia translator compiled to WebAssembly, no server round-trip, no install.",
     tags: ["WebAssembly", "Automata", "Formal Methods"],
   },
+  {
+    id: "02",
+    slug: "ldlf-mt",
+    title: "LDLf modulo theories",
+    subtitle: "Temporal logic over predicates, mintermized with Z3",
+    description:
+      "LDLf where atoms are linear integer predicates instead of opaque letters. Z3 turns the predicate combinations into an alphabet — keeping the satisfiable ones with concrete witnesses, pruning the contradictions — and Lydia builds the automaton. With a minterm debugger and a concrete-trace simulator, all in the browser.",
+    tags: ["Z3", "SMT", "Automata", "WebAssembly"],
+  },
 ];
 
 export function getTool(slug: string): Tool | undefined {

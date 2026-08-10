@@ -14,6 +14,8 @@ import type { Automaton } from "./engine";
 export type Trace = {
   /** Edge labels in order. Empty means the initial state is already accepting. */
   steps: string[];
+  /** States visited, starting at the initial state; length is steps.length + 1. */
+  states: string[];
 };
 
 export type TraceResult = {
@@ -87,12 +89,23 @@ export function enumerateTraces(
 
   // Breadth-first over path length so the shortest, most illustrative traces
   // come out first and survive the limit.
-  type Frame = { state: string; steps: string[]; visits: Map<string, number> };
+  type Frame = {
+    state: string;
+    steps: string[];
+    states: string[];
+    visits: Map<string, number>;
+  };
   let frontier: Frame[] = [
-    { state: automaton.initial, steps: [], visits: new Map([[automaton.initial, 1]]) },
+    {
+      state: automaton.initial,
+      steps: [],
+      states: [automaton.initial],
+      visits: new Map([[automaton.initial, 1]]),
+    },
   ];
 
-  if (accepting.has(automaton.initial)) traces.push({ steps: [] });
+  if (accepting.has(automaton.initial))
+    traces.push({ steps: [], states: [automaton.initial] });
 
   while (frontier.length > 0) {
     if (traces.length >= limit) {
@@ -116,14 +129,15 @@ export function enumerateTraces(
         }
 
         const steps = [...frame.steps, edge.label];
+        const states = [...frame.states, edge.to];
         if (accepting.has(edge.to)) {
-          if (traces.length < limit) traces.push({ steps });
+          if (traces.length < limit) traces.push({ steps, states });
           else truncated = true;
         }
 
         const nextVisits = new Map(frame.visits);
         nextVisits.set(edge.to, seen + 1);
-        next.push({ state: edge.to, steps, visits: nextVisits });
+        next.push({ state: edge.to, steps, states, visits: nextVisits });
       }
     }
 
