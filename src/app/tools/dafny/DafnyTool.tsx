@@ -11,6 +11,7 @@ import {
   highlightActiveLineGutter,
 } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
+import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { bracketMatching, indentOnInput, indentUnit } from "@codemirror/language";
 import { lintGutter, setDiagnostics, type Diagnostic } from "@codemirror/lint";
 import {
@@ -360,6 +361,7 @@ export default function DafnyTool() {
           indentUnit.of("  "),
           indentOnInput(),
           bracketMatching(),
+          closeBrackets(),
           highlightActiveLine(),
           highlightActiveLineGutter(),
           dafnyLanguage(),
@@ -374,6 +376,7 @@ export default function DafnyTool() {
               },
             },
             indentWithTab,
+            ...closeBracketsKeymap,
             ...defaultKeymap,
             ...historyKeymap,
           ]),
