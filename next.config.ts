@@ -17,6 +17,24 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // The Dafny tool runs the multithreaded .NET runtime + Z3 wasm, both
+        // of which need SharedArrayBuffer.
+        source: "/tools/dafny",
+        headers: [
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+        ],
+      },
+      {
+        // .NET runtime assets (dotnet.js, its worker scripts, assemblies)
+        // are fetched into the cross-origin-isolated page and its workers.
+        source: "/dafny/:path*",
+        headers: [
+          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+          { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+        ],
+      },
+      {
         // The pthread workers re-fetch z3-built.js as their own script; a
         // worker script inherits the page's COEP, so its response must carry
         // these headers too or Chrome blocks it (ERR_BLOCKED_BY_RESPONSE).

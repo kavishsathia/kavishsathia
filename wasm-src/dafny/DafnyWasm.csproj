@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+    <OutputType>Exe</OutputType>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <WasmMainJSPath>wwwroot/main.js</WasmMainJSPath>
+    <WasmEnableThreads>true</WasmEnableThreads>
+    <!-- Dafny recursion runs deep; give the runtime a generous stack. -->
+    <WasmInitialHeapSize>268435456</WasmInitialHeapSize>
+    <EmccExtraLDFlags>-sSTACK_SIZE=16777216 -sDEFAULT_PTHREAD_STACK_SIZE=16777216</EmccExtraLDFlags>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DafnyPipeline" Version="4.11.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="DafnyPrelude.bpl" LogicalName="DafnyPrelude.bpl" />
+  </ItemGroup>
+
+</Project>

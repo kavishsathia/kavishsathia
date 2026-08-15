@@ -30,6 +30,15 @@ export const tools: Tool[] = [
       "LDLf where atoms are linear integer predicates instead of opaque letters. Z3 turns the predicate combinations into an alphabet — keeping the satisfiable ones with concrete witnesses, pruning the contradictions — and Lydia builds the automaton. With a minterm debugger and a concrete-trace simulator, all in the browser.",
     tags: ["Z3", "SMT", "Automata", "WebAssembly"],
   },
+  {
+    id: "03",
+    slug: "dafny",
+    title: "Dafny",
+    subtitle: "The full Dafny verifier, in the browser",
+    description:
+      "Not a port — Dafny 4.11 and Boogie, the same .NET assemblies the CLI runs, executing on the .NET runtime compiled to WebAssembly, with Boogie's z3 subprocess pipe rerouted into Z3 wasm. Write a program with pre/postconditions and loop invariants, and every proof obligation is discharged on your machine.",
+    tags: ["Dafny", ".NET wasm", "Z3", "Verification"],
+  },
 ];
 
 export function getTool(slug: string): Tool | undefined {
