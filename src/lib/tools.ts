@@ -39,6 +39,15 @@ export const tools: Tool[] = [
       "Not a port — Dafny 4.11 and Boogie, the same .NET assemblies the CLI runs, executing on the .NET runtime compiled to WebAssembly, with Boogie's z3 subprocess pipe rerouted into Z3 wasm. Write a program with pre/postconditions and loop invariants, and every proof obligation is discharged on your machine.",
     tags: ["Dafny", ".NET wasm", "Z3", "Verification"],
   },
+  {
+    id: "04",
+    slug: "cel",
+    title: "CEL verifier",
+    subtitle: "Google's formal verifier for Common Expression Language, in the browser",
+    description:
+      "The cel-java verifier — the Z3-backed framework Google shipped in August 2026 for proving policies correct — running client-side. Not a reimplementation: the same Java classes, on a JVM compiled to WebAssembly, with the JNI binding to Z3 replaced by a bridge generated from Z3's own API headers. Satisfiability, validity, equivalence, and policy invariants over every possible input.",
+    tags: ["CEL", "Z3", "JVM on wasm", "Verification"],
+  },
 ];
 
 export function getTool(slug: string): Tool | undefined {

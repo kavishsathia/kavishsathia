@@ -42,3 +42,6 @@ next-env.d.ts
 
 # z3 wasm (copied from node_modules by scripts/copy-z3.mjs on postinstall)
 /public/z3/
+
+# CEL verifier build scratch (see wasm-src/cel/build.sh)
+/wasm-src/cel/.work/
