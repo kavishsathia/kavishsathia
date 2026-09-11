@@ -48,6 +48,15 @@ export const tools: Tool[] = [
       "The cel-java verifier — the Z3-backed framework Google shipped in August 2026 for proving policies correct — running client-side. Not a reimplementation: the same Java classes, on a JVM compiled to WebAssembly, with the JNI binding to Z3 replaced by a bridge generated from Z3's own API headers. Satisfiability, validity, equivalence, and policy invariants over every possible input.",
     tags: ["CEL", "Z3", "JVM on wasm", "Verification"],
   },
+  {
+    id: "05",
+    slug: "csp",
+    title: "CSP# trace checker",
+    subtitle: "Runtime verification for PAT's process language, in the browser",
+    description:
+      "Write a model in CSP# — Hoare's CSP with shared variables, channels, and C#-style program blocks, as understood by the PAT model checker — then paste a trace and see whether the model can produce it. Not a model checker: it runs the language's operational semantics forward along the trace, following every state the nondeterminism allows, and shows the enabled events wherever it stops.",
+    tags: ["CSP#", "PAT", "Process algebra", "Runtime verification"],
+  },
 ];
 
 export function getTool(slug: string): Tool | undefined {
