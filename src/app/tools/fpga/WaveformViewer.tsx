@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { surferCursorMessage } from "@/lib/fpga/replay";
 
 type Props = {
   vcd: string | null;
   state: "empty" | "running" | "failed" | "no-dump" | "ready";
+  cursor: number;
   onDownload: () => void;
 };
 
@@ -15,9 +17,10 @@ type SurferMessage = { command: "LoadUrl"; url: string } | { command: "InjectMes
  * VCD parsing and waveform rendering; this component only transfers the VCD to
  * the same-origin iframe and asks Surfer to show the testbench hierarchy.
  */
-export default function WaveformViewer({ vcd, state, onDownload }: Props) {
+export default function WaveformViewer({ vcd, state, cursor, onDownload }: Props) {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const vcdUrlRef = useRef<string | null>(null);
+  const requestedVcdRef = useRef<string | null>(null);
   const [loadedVcd, setLoadedVcd] = useState<string | null>(null);
 
   useEffect(() => {
@@ -26,10 +29,13 @@ export default function WaveformViewer({ vcd, state, onDownload }: Props) {
 
     const post = (message: SurferMessage) => frame.contentWindow?.postMessage(message, window.location.origin);
     const load = () => {
+      if (requestedVcdRef.current === vcd) return;
+      setLoadedVcd(null);
       if (vcdUrlRef.current) URL.revokeObjectURL(vcdUrlRef.current);
       if (!vcd) return;
       const url = URL.createObjectURL(new Blob([vcd], { type: "text/plain" }));
       vcdUrlRef.current = url;
+      requestedVcdRef.current = vcd;
       post({ command: "LoadUrl", url });
     };
     const onMessage = (event: MessageEvent) => {
@@ -46,12 +52,22 @@ export default function WaveformViewer({ vcd, state, onDownload }: Props) {
       }
     };
     window.addEventListener("message", onMessage);
+    const readyProbe = window.setInterval(() => frame.contentWindow?.postMessage({ command: "SurferReadyProbe" }, window.location.origin), 200);
+    frame.contentWindow?.postMessage({ command: "SurferReadyProbe" }, window.location.origin);
     return () => {
+      window.clearInterval(readyProbe);
       window.removeEventListener("message", onMessage);
       if (vcdUrlRef.current) URL.revokeObjectURL(vcdUrlRef.current);
       vcdUrlRef.current = null;
+      requestedVcdRef.current = null;
     };
   }, [vcd]);
+
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame || loadedVcd !== vcd) return;
+    frame.contentWindow?.postMessage({ command: "InjectMessage", message: surferCursorMessage(cursor) } satisfies SurferMessage, window.location.origin);
+  }, [cursor, loadedVcd, vcd]);
 
   const emptyMessage = state === "running"
     ? "Icarus is compiling and simulating…"
@@ -69,7 +85,7 @@ export default function WaveformViewer({ vcd, state, onDownload }: Props) {
     </div>
     {vcd ? <iframe
       ref={frameRef}
-      src="/fpga/surfer/index.html#dev"
+      src="/fpga/surfer/index.html"
       title="Surfer digital waveform viewer"
       className="min-h-[28rem] w-full flex-1 border-0 bg-[#404040]"
       data-testid="surfer-viewer"

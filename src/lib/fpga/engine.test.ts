@@ -38,4 +38,12 @@ describe("simulation process bounds", () => {
     await expect(operation.promise).rejects.toThrow("stopped by user");
     expect(SilentWorker.instances[0].terminated).toBe(true);
   });
+
+  it("applies the source limit to encoded bytes rather than UTF-16 characters", async () => {
+    vi.stubGlobal("window", globalThis);
+    vi.stubGlobal("Worker", SilentWorker);
+    const operation = runSimulation("é".repeat(140 * 1024), "module tb; endmodule");
+    await expect(operation.promise).rejects.toThrow("256 KiB");
+    expect(SilentWorker.instances).toHaveLength(0);
+  });
 });

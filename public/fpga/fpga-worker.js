@@ -7,9 +7,7 @@
 import initIvlpp from "./ivlpp.js";
 import initIvl from "./ivl.js";
 import initVvp from "./vvp.js";
-
-const MAX_VCD_BYTES = 12 * 1024 * 1024;
-const MAX_CONSOLE_CHARS = 128 * 1024;
+import { boundedLines, readBounded, MAX_COMPILED_BYTES, MAX_PREPROCESSED_BYTES, MAX_VCD_BYTES } from "./worker-limits.js";
 
 function sanitize(source) {
   return source
@@ -34,8 +32,8 @@ flag:DLL=vvp.tgt
 }
 
 async function preprocess(files) {
-  const output = [];
-  const errors = [];
+  const output = boundedLines(MAX_PREPROCESSED_BYTES);
+  const errors = boundedLines();
   const runtime = await initIvlpp({ print: (line) => output.push(line), printErr: (line) => errors.push(line) });
   const args = ["-L"];
   for (const file of files) {
@@ -43,32 +41,34 @@ async function preprocess(files) {
     args.push(`/${file.name}`);
   }
   runtime.callMain(args);
-  return { source: `${output.join("\n")}\n`, errors: errors.join("\n") };
+  if (output.exceeded) throw new Error("Preprocessed source exceeded the 2 MiB limit.");
+  return { source: `${output.text()}\n`, errors: errors.text() };
 }
 
 async function compile(source, generation) {
-  const errors = [];
+  const errors = boundedLines();
   const runtime = await initIvl({ print: () => {}, printErr: (line) => errors.push(line) });
   runtime.FS.writeFile("/ivl.conf", config(generation));
   runtime.FS.writeFile("/src.v", source);
   runtime.callMain(["-C/ivl.conf", "--", "/src.v"]);
   let program = null;
-  try { program = runtime.FS.readFile("/out.vvp"); } catch {}
-  return { program, errors: errors.join("\n") };
+  try { program = readBounded(runtime, "/out.vvp", MAX_COMPILED_BYTES, "Compiled program"); } catch (error) {
+    if (error instanceof Error && /exceeded/.test(error.message)) throw error;
+  }
+  return { program, errors: errors.text() };
 }
 
 async function simulate(program) {
-  const output = [];
-  const write = (line) => {
-    if (output.join("\n").length < MAX_CONSOLE_CHARS) output.push(line);
-  };
-  const runtime = await initVvp({ print: write, printErr: write });
+  const output = boundedLines();
+  const runtimeErrors = boundedLines();
+  const runtime = await initVvp({ print: (line) => output.push(line), printErr: (line) => runtimeErrors.push(line) });
   runtime.FS.writeFile("/sim.vvp", program);
   runtime.callMain(["/sim.vvp"]);
   let vcd = null;
-  try { vcd = runtime.FS.readFile("/dump.vcd", { encoding: "utf8" }); } catch {}
-  if (vcd && vcd.length > MAX_VCD_BYTES) throw new Error("Waveform exceeded the 12 MiB output limit.");
-  return { stdout: output.join("\n").slice(0, MAX_CONSOLE_CHARS), vcd };
+  try { vcd = readBounded(runtime, "/dump.vcd", MAX_VCD_BYTES, "Waveform", { encoding: "utf8" }); } catch (error) {
+    if (error instanceof Error && /exceeded/.test(error.message)) throw error;
+  }
+  return { stdout: output.text(), runtimeErrors: runtimeErrors.text(), vcd };
 }
 
 function cleanEngineNoise(text) {
@@ -109,8 +109,8 @@ self.onmessage = async (event) => {
     const simulation = await simulate(compiled.program);
     self.postMessage({ id: request.id, type: "result", result: {
       ...simulation,
-      stdout: [compilerOutput, simulation.stdout].filter(Boolean).join("\n"),
-      diagnostics: compilerOutput ? diagnostics(compilerOutput) : [],
+      stdout: [compilerOutput, simulation.stdout, simulation.runtimeErrors].filter(Boolean).join("\n"),
+      diagnostics: diagnostics([compilerOutput, simulation.runtimeErrors].filter(Boolean).join("\n")),
       elapsedMs: performance.now() - started,
     } });
   } catch (error) {

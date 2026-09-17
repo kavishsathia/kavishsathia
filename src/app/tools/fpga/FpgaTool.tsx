@@ -12,6 +12,7 @@ import { FPGA_EXAMPLES, type FpgaExample } from "@/lib/fpga/examples";
 import { runSimulation, type SimulationStage } from "@/lib/fpga/engine";
 import { formatLogic, formatTime, parseVcdReplay, valueAt } from "@/lib/fpga/replay";
 import type { SimulationDiagnostic, WaveData } from "@/lib/fpga/types";
+import { RunIdentity } from "@/lib/fpga/runIdentity";
 import WaveformViewer from "./WaveformViewer";
 
 const editorTheme = EditorView.theme({
@@ -60,6 +61,7 @@ export default function FpgaTool() {
   const designView = useRef<EditorView | null>(null);
   const testbenchView = useRef<EditorView | null>(null);
   const activeRun = useRef<{ stop: () => void } | null>(null);
+  const runIdentity = useRef(new RunIdentity());
   const vcdRef = useRef<string | null>(null);
   const currentExample = useRef(FPGA_EXAMPLES[0]);
 
@@ -73,6 +75,7 @@ export default function FpgaTool() {
   const [copied, setCopied] = useState(false);
 
   const invalidate = useCallback(() => {
+    runIdentity.current.invalidate();
     activeRun.current?.stop();
     activeRun.current = null;
     vcdRef.current = null;
@@ -91,6 +94,7 @@ export default function FpgaTool() {
     const testbench = testbenchView.current?.state.doc.toString() ?? "";
     if (!design.trim() || !testbench.trim()) return;
     activeRun.current?.stop();
+    const identity = runIdentity.current.begin();
     setWave(null);
     setCursor(0);
     setViewerState("running");
@@ -99,10 +103,13 @@ export default function FpgaTool() {
     setElapsed(null);
     inlineDiagnostics(designView.current, [], "design.v");
     inlineDiagnostics(testbenchView.current, [], "testbench.v");
-    const operation = runSimulation(design, testbench, "2012", setStage);
+    const operation = runSimulation(design, testbench, "2012", (nextStage) => {
+      if (runIdentity.current.isCurrent(identity)) setStage(nextStage);
+    });
     activeRun.current = operation;
     try {
       const result = await operation.promise;
+      if (!runIdentity.current.isCurrent(identity)) return;
       activeRun.current = null;
       setDiagnosticState(result.diagnostics);
       setConsoleOutput(result.stdout);
@@ -119,12 +126,15 @@ export default function FpgaTool() {
       setCursor(0);
       setViewerState("ready");
     } catch (error) {
+      if (!runIdentity.current.isCurrent(identity)) return;
       activeRun.current = null;
       const message = error instanceof Error ? error.message : "Simulation failed.";
       setDiagnosticState([{ file: "engine", message, severity: "error" }]);
       setConsoleOutput(message);
       setViewerState("failed");
-    } finally { setStage(null); }
+    } finally {
+      if (runIdentity.current.isCurrent(identity)) setStage(null);
+    }
   }, []);
   const runRef = useRef(run);
   runRef.current = run;
@@ -186,11 +196,15 @@ export default function FpgaTool() {
             <div className="flex items-center justify-between"><span className="font-mono text-[10px] tracking-wider text-muted">BOARD / REPLAY</span><span className="font-mono text-[9px] text-muted">batch</span></div>
             <p className="mt-2 text-[11px] leading-relaxed text-muted">Controls scrub a completed testbench run; they do not drive a live FPGA.</p>
             <div className="mt-3 flex gap-2"><button onClick={() => setCursor(0)} disabled={!wave} className="border border-border px-2 py-1 font-mono text-[10px] disabled:opacity-30">reset ↺</button><button onClick={nextClockEdge} disabled={!wave} className="border border-border px-2 py-1 font-mono text-[10px] disabled:opacity-30">clock edge ›</button></div>
+            <label className="mt-3 block font-mono text-[9px] text-muted">SELECTED TIME · {formatTime(cursor, wave?.timescale ?? null)}
+              <input aria-label="Selected simulation time" data-testid="board-time-scrubber" type="range" min="0" max={wave?.endTime ?? 1} value={Math.min(cursor, wave?.endTime ?? 1)} disabled={!wave} onChange={(event) => setCursor(Number(event.target.value))} className="mt-1 block w-full" />
+            </label>
             <div className="mt-3 grid grid-cols-4 gap-2" aria-label="Mapped LEDs">
               {Array.from({ length: 4 }, (_, index) => {
-                const signal = mappedSignals[0];
-                const value = signal ? valueAt(signal, cursor) : "0000";
-                const on = value.at(-(index + 1)) === "1";
+                const bus = mappedSignals.find((signal) => signal && signal.width > 1);
+                const signal = bus ?? mappedSignals[index];
+                const value = signal ? valueAt(signal, cursor) : "0";
+                const on = bus ? value.at(-(index + 1)) === "1" : value === "1";
                 return <div key={index} className="text-center"><span className={`mx-auto block h-3 w-3 rounded-full border ${on ? "border-[#24563a] bg-[#24563a]" : "border-border bg-white"}`} /><span className="font-mono text-[9px] text-muted">L{index}</span></div>;
               })}
             </div>
@@ -202,7 +216,7 @@ export default function FpgaTool() {
           </div>
         </aside>
       </div>
-      <WaveformViewer vcd={vcdRef.current} state={viewerState} onDownload={() => {
+      <WaveformViewer vcd={vcdRef.current} state={viewerState} cursor={cursor} onDownload={() => {
         if (!vcdRef.current) return;
         const url = URL.createObjectURL(new Blob([vcdRef.current], { type: "text/plain" }));
         const anchor = document.createElement("a"); anchor.href = url; anchor.download = "dump.vcd"; anchor.click(); URL.revokeObjectURL(url);

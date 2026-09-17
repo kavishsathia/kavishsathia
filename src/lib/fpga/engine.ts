@@ -13,7 +13,7 @@ export function runSimulation(
   generation: WorkerRequest["generation"] = "2012",
   onStage?: (stage: SimulationStage) => void,
 ): { promise: Promise<SimulationResult>; stop: () => void } {
-  if (design.length + testbench.length > SOURCE_LIMIT) {
+  if (new TextEncoder().encode(design).byteLength + new TextEncoder().encode(testbench).byteLength > SOURCE_LIMIT) {
     return {
       promise: Promise.reject(new SimulationLimitError("Combined source exceeds the 256 KiB limit.")),
       stop: () => {},

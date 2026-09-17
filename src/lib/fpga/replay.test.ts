@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatLogic, formatTime, parseVcdReplay, valueAt } from "./replay";
+import { formatLogic, formatTime, parseVcdReplay, surferCursorMessage, valueAt } from "./replay";
 
 const VCD = `$timescale 1 ns $end
 $scope module tb $end
@@ -45,4 +45,8 @@ describe("VCD integration path", () => {
   it("bounds excessive waveform transitions", () => {
     expect(() => parseVcdReplay(VCD, { maxSignals: 10, maxTransitions: 2 })).toThrow(/safety limit/);
   });
+});
+
+it("encodes the selected raw VCD tick for Surfer's primary cursor", () => {
+  expect(surferCursorMessage(12.7)).toBe('{"CursorSet":[1,[13]]}');
 });

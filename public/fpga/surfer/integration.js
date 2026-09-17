@@ -13,10 +13,17 @@
 
 function register_message_listener() {
   window.addEventListener("message", (event) => {
+    if (event.origin !== window.location.origin || event.source !== window.parent) return;
     // JSON decode the message
     const decoded = event.data
 
     switch (decoded.command) {
+      case 'SurferReadyProbe': {
+        if (typeof window.inject_message === 'function') {
+          window.parent.postMessage({ command: 'surfer-ready' }, window.location.origin);
+        }
+        break;
+      }
       // Load a waveform from a URL. The format is inferred from the data.
       // Example: `{command: "LoadUrl", url: "https://app.surfer-project.org/picorv32.vcd"}`
 
@@ -41,6 +48,13 @@ function register_message_listener() {
       // NOTE: The API of these is unstable.
       case 'InjectMessage': {
         window.inject_message(decoded.message);
+        try {
+          const injected = JSON.parse(decoded.message);
+          if (Object.hasOwn(injected, 'CursorSet')) {
+            const digits = injected.CursorSet[1];
+            document.documentElement.dataset.surferCursor = String(digits[0] || 0);
+          }
+        } catch {}
         break
       }
 

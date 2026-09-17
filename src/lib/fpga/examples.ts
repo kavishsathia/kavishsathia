@@ -32,7 +32,7 @@ endmodule`,
     testbench: `\`timescale 1ns/1ps
 module tb;
   reg clk = 0;
-  reg reset = 1;
+  reg reset = 0;
   wire [3:0] leds;
   fpga_top dut(.clk(clk), .reset(reset), .leds(leds));
 
@@ -40,7 +40,7 @@ module tb;
   initial begin
     $dumpfile("dump.vcd");
     $dumpvars(0, tb);
-    #12 reset = 0;
+    #1 reset = 1; #11 reset = 0;
     #220 $finish;
   end
 endmodule`,
@@ -58,14 +58,14 @@ endmodule`,
 endmodule`,
     testbench: `\`timescale 1ns/1ps
 module tb;
-  reg clk = 0, reset = 1;
+  reg clk = 0, reset = 0;
   reg [3:0] duty = 4'd4;
   wire pwm;
   pwm4 dut(.clk(clk), .reset(reset), .duty(duty), .pwm(pwm));
   always #2 clk = ~clk;
   initial begin
     $dumpfile("dump.vcd"); $dumpvars(0, tb);
-    #5 reset = 0; #64 duty = 4'd12; #64 $finish;
+    #1 reset = 1; #4 reset = 0; #64 duty = 4'd12; #64 $finish;
   end
 endmodule`,
   },
@@ -85,13 +85,13 @@ endmodule`,
 endmodule`,
     testbench: `\`timescale 1ns/1ps
 module tb;
-  reg clk = 0, reset = 1;
+  reg clk = 0, reset = 0;
   wire red, amber, green;
   traffic dut(.clk(clk), .reset(reset), .red(red), .amber(amber), .green(green));
   always #5 clk = ~clk;
   initial begin
     $dumpfile("dump.vcd"); $dumpvars(0, tb);
-    #7 reset = 0; #70 $finish;
+    #1 reset = 1; #6 reset = 0; #70 $finish;
   end
 endmodule`,
   },

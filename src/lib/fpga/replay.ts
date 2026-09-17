@@ -125,3 +125,14 @@ export function formatTime(raw: number, timescale: WaveData["timescale"]): strin
   }
   return `${Math.round(seconds / 1e-15)} fs`;
 }
+
+export function surferCursorMessage(raw: number) {
+  const tick = Math.max(0, Math.round(raw));
+  const digits: number[] = [];
+  let remaining = tick;
+  while (remaining > 0) {
+    digits.push(remaining % 0x1_0000_0000);
+    remaining = Math.floor(remaining / 0x1_0000_0000);
+  }
+  return JSON.stringify({ CursorSet: tick === 0 ? [0, []] : [1, digits] });
+}
