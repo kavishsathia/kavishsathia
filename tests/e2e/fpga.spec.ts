@@ -107,6 +107,42 @@ test("syntax errors are causal and leave no stale waveform", async ({ page }, te
   await expect(page.getByText("Simulation failed. Fix the diagnostic and run again.")).toBeVisible();
 });
 
+test("a real Icarus runtime error is causal and leaves no stale waveform", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === "mobile", "desktop integration coverage");
+  await page.goto("/tools/fpga");
+  await page.getByTestId("run-simulation").click();
+  await expect(page.getByTestId("simulation-result")).toBeVisible({ timeout: 20_000 });
+
+  const testbench = page.getByRole("region", { name: "TESTBENCH.V" }).locator(".cm-content");
+  await testbench.click();
+  await page.keyboard.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
+  await page.keyboard.type(`module tb;
+  initial begin
+    $dumpfile("dump.vcd"); $dumpvars(0, tb);
+    $error("intentional runtime failure");
+    #1 $finish;
+  end
+endmodule`);
+  await page.getByTestId("run-simulation").click();
+
+  await expect(page.getByTestId("diagnostics")).toContainText("intentional runtime failure", { timeout: 20_000 });
+  await expect(page.getByText("Simulation failed. Fix the diagnostic and run again.")).toBeVisible();
+  await expect(page.getByTestId("simulation-result")).toHaveCount(0);
+
+  await testbench.click();
+  await page.keyboard.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
+  await page.keyboard.type(`module tb;
+  initial begin
+    $dumpfile("dump.vcd"); $dumpvars(0, tb);
+    $fatal(1, "intentional fatal failure");
+  end
+endmodule`);
+  await page.getByTestId("run-simulation").click();
+  await expect(page.getByTestId("diagnostics")).toContainText("intentional fatal failure", { timeout: 20_000 });
+  await expect(page.getByText("Simulation failed. Fix the diagnostic and run again.")).toBeVisible();
+  await expect(page.getByTestId("simulation-result")).toHaveCount(0);
+});
+
 test("real Icarus output preserves bus X and Z values", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === "mobile", "desktop integration coverage");
   await page.goto("/tools/fpga");

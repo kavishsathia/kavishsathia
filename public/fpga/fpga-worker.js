@@ -75,6 +75,10 @@ function cleanEngineNoise(text) {
   return text.split("\n").filter((line) => !/system\.vpi|dynamic linking not enabled/.test(line)).join("\n").trim();
 }
 
+function runtimeFailures(text) {
+  return text.split("\n").filter((line) => /^(?:ERROR|FATAL):\s+\/?(?:design|testbench)\.v:\d+:/i.test(line.trim())).join("\n");
+}
+
 function diagnostics(text) {
   return text.split("\n").filter(Boolean).map((line) => {
     const match = line.match(/\/?(design|testbench)\.v:(\d+):?\s*(.*)/);
@@ -107,10 +111,12 @@ self.onmessage = async (event) => {
     }
     stage("simulating");
     const simulation = await simulate(compiled.program);
+    const runtimeOutput = cleanEngineNoise(simulation.runtimeErrors);
+    const runtimeFailureOutput = [runtimeOutput, runtimeFailures(simulation.stdout)].filter(Boolean).join("\n");
     self.postMessage({ id: request.id, type: "result", result: {
       ...simulation,
-      stdout: [compilerOutput, simulation.stdout, simulation.runtimeErrors].filter(Boolean).join("\n"),
-      diagnostics: diagnostics([compilerOutput, simulation.runtimeErrors].filter(Boolean).join("\n")),
+      stdout: [compilerOutput, simulation.stdout, runtimeOutput].filter(Boolean).join("\n"),
+      diagnostics: diagnostics([compilerOutput, runtimeFailureOutput].filter(Boolean).join("\n")),
       elapsedMs: performance.now() - started,
     } });
   } catch (error) {
