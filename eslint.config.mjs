@@ -15,6 +15,16 @@ const eslintConfig = defineConfig([
     // Emscripten-generated glue for the LDLf tools.
     "public/wasm/**",
     "public/z3/**",
+    "public/cel/z3-cel.js",
+    "public/dafny/_framework/**",
+    // Unmodified generated Emscripten/wasm-bindgen glue. The authored worker
+    // remains linted at public/fpga/fpga-worker.js.
+    "public/fpga/ivl.js",
+    "public/fpga/ivlpp.js",
+    "public/fpga/vvp.js",
+    "public/fpga/surfer/surfer.js",
+    "public/fpga/surfer/surfer.d.ts",
+    "public/fpga/surfer/integration.js",
   ]),
 ]);
 

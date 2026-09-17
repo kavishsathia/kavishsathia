@@ -57,6 +57,15 @@ export const tools: Tool[] = [
       "Write a model in CSP# — Hoare's CSP with shared variables, channels, and C#-style program blocks, as understood by the PAT model checker — then paste a trace and see whether the model can produce it. Not a model checker: it runs the language's operational semantics forward along the trace, following every state the nondeterminism allows, and shows the enabled events wherever it stops.",
     tags: ["CSP#", "PAT", "Process algebra", "Runtime verification"],
   },
+  {
+    id: "06",
+    slug: "fpga",
+    title: "FPGA simulator",
+    subtitle: "Verilog simulation and waveform inspection, in the browser",
+    description:
+      "Compile Verilog/SystemVerilog with the real Icarus Verilog toolchain running in a bounded Web Worker, execute the testbench locally, and inspect its VCD in a hierarchy-aware digital waveform workspace with cursor values, zoom, pan, and board-output replay.",
+    tags: ["FPGA", "Icarus Verilog", "WebAssembly", "VCD"],
+  },
 ];
 
 export function getTool(slug: string): Tool | undefined {
