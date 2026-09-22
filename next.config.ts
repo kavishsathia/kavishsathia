@@ -26,6 +26,14 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // The CHC tool runs Spacer on the same threaded Z3 wasm build.
+        source: "/tools/chc",
+        headers: [
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+        ],
+      },
+      {
         // .NET runtime assets (dotnet.js, its worker scripts, assemblies)
         // are fetched into the cross-origin-isolated page and its workers.
         source: "/dafny/:path*",

@@ -66,6 +66,15 @@ export const tools: Tool[] = [
       "Compile Verilog/SystemVerilog with the real Icarus Verilog toolchain running in a bounded Web Worker, execute the testbench locally, and inspect its VCD in a hierarchy-aware digital waveform workspace with cursor values, zoom, pan, and board-output replay.",
     tags: ["FPGA", "Icarus Verilog", "WebAssembly", "VCD"],
   },
+  {
+    id: "07",
+    slug: "chc",
+    title: "Constrained Horn clauses",
+    subtitle: "Z3's Spacer engine, in the browser",
+    description:
+      "Write constrained Horn clauses in a Dafny-style math notation, or in CHC-COMP's SMT-LIB, and let Spacer decide them. Satisfiable clauses come back with their model: inductive invariants and procedure summaries, shown as math and re-checked clause by clause. Unsatisfiable ones come back as a derivation of false, flattened into a counterexample where every step is traced to the clause that produced it.",
+    tags: ["Z3", "Spacer", "CHC", "Verification"],
+  },
 ];
 
 export function getTool(slug: string): Tool | undefined {
