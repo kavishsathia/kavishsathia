@@ -75,6 +75,15 @@ export const tools: Tool[] = [
       "Write constrained Horn clauses in a Dafny-style math notation, or in CHC-COMP's SMT-LIB, and let Spacer decide them. Satisfiable clauses come back with their model: inductive invariants and procedure summaries, shown as math and re-checked clause by clause. Unsatisfiable ones come back as a derivation of false, flattened into a counterexample where every step is traced to the clause that produced it.",
     tags: ["Z3", "Spacer", "CHC", "Verification"],
   },
+  {
+    id: "08",
+    slug: "pluscal",
+    title: "PlusCal & TLC",
+    subtitle: "The TLA+ model checker, in the browser",
+    description:
+      "Write a PlusCal algorithm or a plain TLA+ spec, name its invariants and temporal properties, and let TLC search every reachable state. Not a port: the TLA+ project's own tla2tools.jar — translator, SANY parser and TLC — with the Community Modules, unmodified, on a JVM compiled to WebAssembly. Violations come back as error traces you can step through against the source; liveness failures as lassos and stutters.",
+    tags: ["TLA+", "PlusCal", "TLC", "JVM on wasm"],
+  },
 ];
 
 export function getTool(slug: string): Tool | undefined {

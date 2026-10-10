@@ -72,6 +72,8 @@ declare global {
     initZ3Cel?: (opts?: Record<string, unknown>) => Promise<Z3Module>;
     cheerpjInit?: (opts: Record<string, unknown>) => Promise<void>;
     cheerpjRunLibrary?: (classPath: string) => Promise<unknown>;
+    /** Which tool initialised CheerpJ on this page (it can only be done once). */
+    __cheerpjOwner?: string;
   }
 }
 
@@ -113,7 +115,11 @@ export function loadEngine(onPhase?: (phase: LoadPhase) => void): Promise<JavaFa
       });
 
       onPhase?.("cheerpj");
+      if (window.__cheerpjOwner && window.__cheerpjOwner !== "cel") {
+        throw new EngineUnavailableError("Another tool started the JVM on this page; reload to use this one.");
+      }
       await loadScript(CHEERPJ_LOADER_URL, () => typeof window.cheerpjInit === "function");
+      window.__cheerpjOwner = "cel";
       await window.cheerpjInit!({
         version: 11,
         status: "none",

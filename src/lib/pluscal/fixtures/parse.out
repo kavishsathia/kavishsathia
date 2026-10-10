@@ -1,0 +1,43 @@
+@!@!@STARTMSG 2262:0 @!@!@
+TLC2 Version 2026.10.06.014338 (rev: 94d0c50)
+@!@!@ENDMSG 2262 @!@!@
+@!@!@STARTMSG 2187:0 @!@!@
+Running breadth-first search Model-Checking with fp 21 and seed 7030955374857628136 with 1 worker on 11 cores with 4096MB heap and 64MB offheap memory [pid: 1] (Linux 1.0 cheerpj, Leaning Technologies Ltd 11.0.31-internal 32bit, MSBDiskFPSet, DiskStateQueue).
+@!@!@ENDMSG 2187 @!@!@
+@!@!@STARTMSG 2220:0 @!@!@
+Starting SANY...
+@!@!@ENDMSG 2220 @!@!@
+Parsing file /spec/Parse.tla
+***Parse Error***
+Was expecting "==== or more Module body"
+Encountered "0" at line 4, column 15 and token "=" 
+
+Residual stack trace follows:
+Module definition starting at line 1, column 1.
+
+
+Fatal errors while parsing TLA+ spec in file Parse
+
+In module Parse
+
+Could not parse module Parse from file Parse.tla
+*** Errors: 1
+
+In module Parse
+
+Could not parse module Parse from file Parse.tla
+
+
+
+@!@!@STARTMSG 2219:0 @!@!@
+SANY finished.
+@!@!@ENDMSG 2219 @!@!@
+@!@!@STARTMSG 2185:0 @!@!@
+Starting... (2026-10-10 19:30:23)
+@!@!@ENDMSG 2185 @!@!@
+@!@!@STARTMSG 3002:1 @!@!@
+Parsing or semantic analysis failed.
+@!@!@ENDMSG 3002 @!@!@
+@!@!@STARTMSG 2186:0 @!@!@
+Finished in 107ms at (2026-10-10 19:30:23)
+@!@!@ENDMSG 2186 @!@!@

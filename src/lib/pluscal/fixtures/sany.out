@@ -1,0 +1,34 @@
+@!@!@STARTMSG 2262:0 @!@!@
+TLC2 Version 2026.10.06.014338 (rev: 94d0c50)
+@!@!@ENDMSG 2262 @!@!@
+@!@!@STARTMSG 2187:0 @!@!@
+Running breadth-first search Model-Checking with fp 2 and seed -3931769399807903739 with 1 worker on 11 cores with 4096MB heap and 64MB offheap memory [pid: 1] (Linux 1.0 cheerpj, Leaning Technologies Ltd 11.0.31-internal 32bit, MSBDiskFPSet, DiskStateQueue).
+@!@!@ENDMSG 2187 @!@!@
+@!@!@STARTMSG 2220:0 @!@!@
+Starting SANY...
+@!@!@ENDMSG 2220 @!@!@
+Parsing file /spec/Sany.tla
+Parsing file /files/tlc-11583594370331159199/Naturals.tla (jar:file:/app/pluscal/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)
+Semantic processing of module Naturals
+Semantic processing of module Sany
+Semantic errors:
+
+*** Errors: 1
+
+line 5, col 18 to line 5, col 31 of module Sany
+
+Unknown operator: `undefinedThing'.
+
+
+@!@!@STARTMSG 2219:0 @!@!@
+SANY finished.
+@!@!@ENDMSG 2219 @!@!@
+@!@!@STARTMSG 2185:0 @!@!@
+Starting... (2026-10-10 19:30:23)
+@!@!@ENDMSG 2185 @!@!@
+@!@!@STARTMSG 3002:1 @!@!@
+Parsing or semantic analysis failed.
+@!@!@ENDMSG 3002 @!@!@
+@!@!@STARTMSG 2186:0 @!@!@
+Finished in 119ms at (2026-10-10 19:30:23)
+@!@!@ENDMSG 2186 @!@!@

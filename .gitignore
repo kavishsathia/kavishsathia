@@ -45,3 +45,6 @@ next-env.d.ts
 
 # CEL verifier build scratch (see wasm-src/cel/build.sh)
 /wasm-src/cel/.work/
+
+# PlusCal/TLC build scratch (see wasm-src/pluscal/build.sh)
+/wasm-src/pluscal/.work/
