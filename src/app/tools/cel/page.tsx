@@ -22,6 +22,12 @@ export default function CelPage() {
         <p className="hidden sm:block text-sm text-muted">
           Google&apos;s Z3 verifier for CEL, running in your browser
         </p>
+        <Link
+          href="/tools/cel/units"
+          className="ml-auto font-mono text-xs text-muted hover:text-foreground transition-colors"
+        >
+          translation units →
+        </Link>
       </header>
 
       <CelTool />

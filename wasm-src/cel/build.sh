@@ -53,6 +53,11 @@ javac --release 11 -Xlint:-options -nowarn -cp "$CP" -processorpath "$PP" -d cla
 # natives come from JavaScript, so it becomes a no-op.
 javac --release 11 -d classes "$HERE/stub/tools/aqua/turnkey/support/TurnKey.java"
 
+# --- the facade's evaluator on a desktop JVM (runtime only, no Z3) ---------
+rm -rf testc && mkdir -p testc
+javac --release 11 -nowarn -cp "classes:$CP" -d testc "$HERE/test/dev/cel/verifier/tools/EvalCheck.java"
+java -cp "testc:classes:$CP" dev.cel.verifier.tools.EvalCheck
+
 # --- one jar: classes + z3's Java classes (no native libs) + dependencies ---
 rm -rf fat && mkdir -p fat && cp -R classes/. fat/
 Z3JAR=$(tr ':' '\n' < cp-runtime.txt | grep z3-turnkey)

@@ -84,6 +84,15 @@ export const tools: Tool[] = [
       "Write a PlusCal algorithm or a plain TLA+ spec, name its invariants and temporal properties, and let TLC search every reachable state. Not a port: the TLA+ project's own tla2tools.jar — translator, SANY parser and TLC — with the Community Modules, unmodified, on a JVM compiled to WebAssembly. Violations come back as error traces you can step through against the source; liveness failures as lassos and stutters.",
     tags: ["TLA+", "PlusCal", "TLC", "JVM on wasm"],
   },
+  {
+    id: "09",
+    slug: "cel/units",
+    title: "CEL translation units",
+    subtitle: "Concrete events to a CSP alphabet, proven disjoint",
+    description:
+      "Define translation units as CEL predicates over one typed event schema, each naming the CSP event it emits. The cel-java verifier and Z3 prove every pair disjoint under a shared domain assumption, or hand back an event both accept; concrete agent tool calls are translated by CEL's own runtime, with unmapped and ambiguous events called out rather than resolved by first match.",
+    tags: ["CEL", "Z3", "CSP", "Verification"],
+  },
 ];
 
 export function getTool(slug: string): Tool | undefined {

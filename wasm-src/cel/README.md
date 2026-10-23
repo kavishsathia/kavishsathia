@@ -39,7 +39,12 @@ Two small pieces of glue:
 
 `src/.../CelVerifierWeb.java` is the JS-facing facade: it lives in the tools
 package to reuse `CelVerifierToolCore` and `VerificationOptions`, and wraps
-results in JSON.
+results in JSON. Besides the verifier calls it has one runtime entry point,
+`evaluate`, used by `/tools/cel/units` to translate concrete events: it
+compiles each field's literal against the field's declared type and each
+predicate with the verifier's own compiler, then runs them on cel-java's
+planner runtime with the matching extension libraries. `test/.../EvalCheck.java`
+exercises it on a desktop JVM during `build.sh`.
 
 ## Rebuilding
 

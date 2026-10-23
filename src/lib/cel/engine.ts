@@ -65,6 +65,7 @@ type JavaFacade = {
   equiv(a: string, b: string, vars: string, timeoutMs: number, unroll: number, unknowns: string): Promise<string>;
   policyInvariants(yaml: string, vars: string, timeoutMs: number, unroll: number, unknowns: string): Promise<string>;
   policyEquiv(a: string, b: string, vars: string, timeoutMs: number, unroll: number, unknowns: string): Promise<string>;
+  evaluate(vars: string, bindings: string, expressions: string): Promise<string>;
 };
 
 declare global {
@@ -206,6 +207,34 @@ export function checkPolicyEquivalence(a: string, b: string, o: VerifyOptions): 
   return enqueue(async () => {
     const f = await loadEngine();
     return parse(await f.policyEquiv(a, b, o.variables, o.timeoutMs, o.unrollLimit, o.unknowns));
+  });
+}
+
+/** One expression's value on a concrete input, from cel-java's runtime. */
+export type Evaluation =
+  | { ok: true; value: boolean }
+  | { ok: false; kind: "compile" | "type" | "eval"; error: string };
+
+export type EvaluationBatch = {
+  /** Missing, undeclared, duplicate or ill-typed fields; when non-empty nothing was evaluated. */
+  inputErrors: { field: string; error: string }[];
+  results: Evaluation[];
+};
+
+/**
+ * Evaluates boolean expressions against one concrete input with cel-java's
+ * runtime (no solver). Each binding is a CEL literal compiled against its
+ * field's declared type; every declared variable must be bound.
+ */
+export function evaluate(
+  variables: string,
+  bindings: { name: string; literal: string }[],
+  expressions: string[],
+): Promise<Outcome<EvaluationBatch>> {
+  return enqueue(async () => {
+    const f = await loadEngine();
+    const b = bindings.map((x) => `${x.name}\u001f${x.literal}`).join("\u001e");
+    return parse(await f.evaluate(variables, b, expressions.join("\u001e")));
   });
 }
 
