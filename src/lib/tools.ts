@@ -88,9 +88,9 @@ export const tools: Tool[] = [
     id: "09",
     slug: "cel/units",
     title: "CEL translation units",
-    subtitle: "Concrete events to a CSP alphabet, proven disjoint",
+    subtitle: "Concrete events to a CSP alphabet, proven disjoint and exhaustive",
     description:
-      "Define translation units as CEL predicates over one typed event schema, each naming the CSP event it emits. The cel-java verifier and Z3 prove every pair disjoint under a shared domain assumption, or hand back an event both accept; concrete agent tool calls are translated by CEL's own runtime, with unmapped and ambiguous events called out rather than resolved by first match.",
+      "Define translation units as CEL predicates over one typed event schema, each naming the CSP event it emits, plus a generated fallback for everything else. The cel-java verifier and Z3 prove every pair disjoint under a shared domain assumption, or hand back an event both accept, and check automatically that every in-domain event lands in a unit or the fallback; concrete agent tool calls are translated by CEL's own runtime, with ambiguous and erroring events called out rather than resolved by first match or swallowed by the fallback.",
     tags: ["CEL", "Z3", "CSP", "Verification"],
   },
 ];

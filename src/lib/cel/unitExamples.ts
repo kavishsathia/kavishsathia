@@ -7,6 +7,7 @@ export type UnitExample = {
   schema: string;
   assumption: string;
   units: [name: string, predicate: string, symbol: string][];
+  fallback: string;
   events: Record<string, string>[];
 };
 
@@ -17,7 +18,7 @@ export const unitExamples: UnitExample[] = [
   {
     id: "agent-disjoint",
     label: "agent tool calls",
-    blurb: "six units over tool calls; every pair is disjoint under the assumption",
+    blurb: "six units over tool calls; every pair is disjoint under the assumption, and the rest goes to the fallback",
     schema: AGENT_SCHEMA,
     assumption: AGENT_ASSUMPTION,
     units: [
@@ -28,13 +29,14 @@ export const unitExamples: UnitExample[] = [
       ["pay_small", "tool == 'transfer' && amount <= 100", "pay.small"],
       ["pay_large", "tool == 'transfer' && amount > 100", "pay.large"],
     ],
+    fallback: "other",
     events: [
       { tool: "'read_file'", resource: "'/home/k/notes.md'", amount: "0" },
       { tool: "'read_file'", resource: "'/etc/passwd'", amount: "0" },
       { tool: "'transfer'", resource: "'acct:42'", amount: "100" },
       { tool: "'transfer'", resource: "'acct:42'", amount: "101" },
       { tool: "'http_get'", resource: "'http://example.com'", amount: "0" },
-      { tool: "'delete_file'", resource: "'/tmp/x'", amount: "0" },
+      { tool: "'write_file'", resource: "'/tmp/out'", amount: "0" },
     ],
   },
   {
@@ -49,6 +51,7 @@ export const unitExamples: UnitExample[] = [
       ["pay_small", "tool == 'transfer' && amount <= 100", "pay.small"],
       ["pay_large", "tool == 'transfer' && amount >= 100", "pay.large"],
     ],
+    fallback: "other",
     events: [
       { tool: "'transfer'", resource: "'acct:42'", amount: "100" },
       { tool: "'read_file'", resource: "'/vault/secret.txt'", amount: "0" },
@@ -58,7 +61,7 @@ export const unitExamples: UnitExample[] = [
   {
     id: "boundaries",
     label: "vacuous, errors, bounds",
-    blurb: "a unit the assumption rules out, a predicate that can error, and list quantifiers under an unroll bound",
+    blurb: "a unit the assumption rules out, a predicate that can error, list quantifiers under an unroll bound, and an event outside the domain",
     schema: "tool:string\ntags:list<string>\namount:int",
     assumption: "amount >= 0",
     units: [
@@ -67,11 +70,34 @@ export const unitExamples: UnitExample[] = [
       ["refund", "tool == 'refund' && amount < 0", "pay.refund"],
       ["rate", "tool == 'rate' && 1000 / amount > 10", "rate.high"],
     ],
+    fallback: "other",
     events: [
       { tool: "'export'", tags: "['pii', 'eu']", amount: "0" },
       { tool: "'export'", tags: "[]", amount: "0" },
       { tool: "'rate'", tags: "[]", amount: "0" },
       { tool: "'export'", tags: "['eu']", amount: "'many'" },
+      { tool: "'refund'", tags: "[]", amount: "-5" },
+    ],
+  },
+  {
+    id: "coverage",
+    label: "fallback & coverage",
+    blurb:
+      "the explicit units leave gaps, which go to the fallback; but 1000 / amount errors at 0, so not even the fallback makes the translation total",
+    schema: AGENT_SCHEMA,
+    assumption: AGENT_ASSUMPTION,
+    units: [
+      ["read", "tool == 'read_file'", "fs.read"],
+      ["write", "tool == 'write_file'", "fs.write"],
+      ["pay_small", "tool == 'transfer' && amount >= 1 && amount <= 100", "pay.small"],
+      ["pay_large", "tool == 'transfer' && 1000 / amount < 10", "pay.large"],
+    ],
+    fallback: "unclassified",
+    events: [
+      { tool: "'read_file'", resource: "'/home/k/notes.md'", amount: "0" },
+      { tool: "'http_get'", resource: "'https://example.com'", amount: "0" },
+      { tool: "'transfer'", resource: "'acct:42'", amount: "500" },
+      { tool: "'transfer'", resource: "'acct:42'", amount: "0" },
     ],
   },
 ];
@@ -81,6 +107,7 @@ export function workbenchFrom(ex: UnitExample): Workbench {
     schema: ex.schema,
     assumption: ex.assumption,
     units: ex.units.map(([name, predicate, symbol]) => ({ key: freshKey("u"), name, predicate, symbol })),
+    fallback: ex.fallback,
     events: ex.events.map((values) => ({ key: freshKey("e"), values: { ...values } })),
     timeoutSec: 10,
     unroll: 5,
