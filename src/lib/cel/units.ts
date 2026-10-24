@@ -3,10 +3,14 @@
  * CSP events, and the formal questions asked about them.
  *
  * Nothing here decides anything. Classification of a concrete event comes
- * from cel-java's runtime (`evaluate` in engine.ts); disjointness and
- * reachability come from the cel-java verifier's `isSatisfiable`. This module
- * only builds the queries, reads the verifier's statuses back, and validates
- * the configuration around them.
+ * from cel-java's runtime (`evaluate` in engine.ts); disjointness,
+ * reachability and coverage come from the cel-java verifier's `isSatisfiable`
+ * and `isAlwaysTrue`. This module only builds the queries, reads the
+ * verifier's statuses back, and validates the configuration around them.
+ *
+ * Besides the explicit units there is one generated fallback: the predicate
+ * `!(P1 || ... || Pn)`, emitting a user-chosen CSP event. It is not editable,
+ * so it can't overlap an explicit unit by mistake.
  */
 
 import type { Evaluation, EvaluationBatch, Outcome, VerificationResult } from "./engine";
@@ -31,12 +35,25 @@ export type Workbench = {
   /** Domain assumption shared by every proof and checked on every event. */
   assumption: string;
   units: Unit[];
+  /** CSP event for in-domain events no explicit unit matches. */
+  fallback: string;
   events: ConcreteEvent[];
   timeoutSec: number;
   unroll: number;
 };
 
 export type Field = { name: string; type: string };
+
+export const DEFAULT_FALLBACK = "other";
+
+/** `other`, or `other_2`, `other_3`… if an explicit unit already emits it. */
+export function defaultFallback(units: Pick<Unit, "symbol">[]): string {
+  const taken = new Set(units.map((u) => u.symbol));
+  if (!taken.has(DEFAULT_FALLBACK)) return DEFAULT_FALLBACK;
+  let i = 2;
+  while (taken.has(`${DEFAULT_FALLBACK}_${i}`)) i++;
+  return `${DEFAULT_FALLBACK}_${i}`;
+}
 
 const IDENT = /^[A-Za-z_][A-Za-z0-9_]*$/;
 /** A fixed CSP event name: dotted identifiers, as in `call.read` or `deny`. */
@@ -67,10 +84,13 @@ export function parseSchema(schema: string): { fields: Field[]; errors: string[]
   return { fields, errors };
 }
 
+/** `ConfigIssue.unit` for issues about the fallback row (unit keys never take this form). */
+export const FALLBACK_KEY = "fallback";
+
 export type ConfigIssue = { unit?: string; severity: "error" | "warning"; message: string };
 
 /** Problems with the unit table itself, before any solver is involved. */
-export function configIssues(w: Pick<Workbench, "schema" | "assumption" | "units">): ConfigIssue[] {
+export function configIssues(w: Pick<Workbench, "schema" | "assumption" | "units" | "fallback">): ConfigIssue[] {
   const issues: ConfigIssue[] = parseSchema(w.schema).errors.map((message) => ({
     severity: "error" as const,
     message: `schema: ${message}`,
@@ -109,6 +129,15 @@ export function configIssues(w: Pick<Workbench, "schema" | "assumption" | "units
       issues.push({ severity: "error", message: `unit name ${name} is used ${n} times; names must be unique` });
     }
   }
+  if (!CSP_SYMBOL.test(w.fallback)) {
+    issues.push({ unit: FALLBACK_KEY, severity: "error", message: "fallback: CSP event must be a fixed name like other" });
+  } else if (bySymbol.has(w.fallback)) {
+    issues.push({
+      unit: FALLBACK_KEY,
+      severity: "error",
+      message: `fallback event ${w.fallback} is also emitted by ${bySymbol.get(w.fallback)!.join(", ")}; it must be a distinct CSP event`,
+    });
+  }
   for (const [symbol, names] of bySymbol) {
     if (names.length > 1) {
       issues.push({
@@ -134,6 +163,34 @@ export const pairQuery = (assumption: string, a: Unit, b: Unit) =>
 
 /** `isSatisfiable` of a unit under the assumption: does the unit ever fire? */
 export const reachQuery = (assumption: string, u: Unit) => conjoin(assumption, u.predicate);
+
+/** `(P1) || ... || (Pn)`: some explicit unit matches. */
+export const unionOf = (units: Unit[]) =>
+  units.length === 0 ? "false" : units.map((u) => `(\n${u.predicate}\n)`).join(" || ");
+
+/** The generated fallback predicate: no explicit unit matches. */
+export const fallbackPredicate = (units: Unit[]) => `!(\n${unionOf(units)}\n)`;
+
+/**
+ * `isSatisfiable`: does the fallback ever fire in the domain? Not satisfiable
+ * means the explicit units alone cover the domain; a model is an in-domain
+ * event only the fallback translates. (It is also the fallback's diagonal.)
+ */
+export const gapQuery = (assumption: string, units: Unit[]) => conjoin(assumption, fallbackPredicate(units));
+
+/** `isSatisfiable`: the fallback against every explicit unit at once (disjoint by construction; checked anyway). */
+export const fallbackDisjointQuery = (assumption: string, units: Unit[]) =>
+  conjoin(assumption, fallbackPredicate(units), unionOf(units));
+
+/**
+ * `isAlwaysTrue`: every in-domain event is matched by an explicit unit or the
+ * fallback. Not a tautology in CEL: a predicate that errors (or an assumption
+ * that does) makes the disjunction an error rather than true, and the
+ * verifier reports such an event as a counterexample — the runtime doesn't
+ * send it to the fallback either.
+ */
+export const exhaustiveQuery = (assumption: string, units: Unit[]) =>
+  `!(\n${assumption}\n) || ${units.length ? `${unionOf(units)} || ` : ""}(\n${fallbackPredicate(units)}\n)`;
 
 /** cel-java's compile() reports the AST's result type; for bool that's `SimpleType{kind=BOOL, name=bool}`. */
 export const isBoolType = (t: string) => t === "bool" || /\bkind=BOOL\b/.test(t);
@@ -167,6 +224,29 @@ export function readEmptiness(out: Outcome<VerificationResult>): ProofVerdict {
 }
 
 /**
+ * Reads `isAlwaysTrue(q)` back as an answer to "does q hold everywhere?".
+ *
+ * Same three passes, other way round: no counterexample at all is VERIFIED;
+ * an exact one is VIOLATED ("Condition is not always true." and the model);
+ * approximate, truncated or solver-unknown is INCONCLUSIVE; a timeout throws.
+ * An unsatisfiable assumption makes the implication VERIFIED vacuously, so the
+ * caller has to check the domain separately.
+ */
+export function readValidity(out: Outcome<VerificationResult>): ProofVerdict {
+  if (!out.ok) {
+    const f = out.failure;
+    return { kind: "error", detail: f.kind === "compile" ? f.error : f.rootError || f.error };
+  }
+  const r = out.value;
+  if (r.status === "VERIFIED") {
+    return { kind: "proved", detail: r.message || "VERIFIED (cel-java gives no message: no counterexample in any pass)" };
+  }
+  const witness = parseWitness(r.message);
+  if (r.status === "VIOLATED") return { kind: "refuted", detail: r.message, witness };
+  return { kind: "not-proven", detail: r.message, ...(Object.keys(witness).length ? { witness } : {}) };
+}
+
+/**
  * The model cel-java prints after "Satisfying input:" — one `  name = value`
  * line per constant — turned back into CEL literals where that's unambiguous
  * (Z3 strings and negative numerals are rewritten). Fields the solver left
@@ -175,7 +255,7 @@ export function readEmptiness(out: Outcome<VerificationResult>): ProofVerdict {
  */
 export function parseWitness(message: string): Record<string, string> {
   const out: Record<string, string> = {};
-  const at = message.search(/(Satisfying|Counterexample) input:/);
+  const at = message.search(/(Satisfying|Counterexample|Potential satisfying|Potential counterexample) input:/);
   if (at < 0) return out;
   for (const line of message.slice(at).split("\n").slice(1)) {
     const m = /^ {2}([A-Za-z_][A-Za-z0-9_]*) = (.*)$/.exec(line);
@@ -202,22 +282,33 @@ export type Classification =
   | { kind: "input-error"; errors: { field: string; error: string }[] }
   | { kind: "assumption-error"; error: string }
   | { kind: "unit-error"; errors: { unit: Unit; error: string }[]; matches: Unit[]; inDomain: boolean }
-  | { kind: "unmapped"; inDomain: boolean }
-  | { kind: "mapped"; unit: Unit; inDomain: boolean }
-  | { kind: "ambiguous"; matches: Unit[]; inDomain: boolean };
+  /** The assumption is false: the translation (and every proof) is about the domain only. */
+  | { kind: "outside-domain"; matches: Unit[] }
+  /** The runtime's value of the generated fallback disagreed with the units' — shouldn't happen. */
+  | { kind: "fallback-error"; error: string }
+  | { kind: "fallback" }
+  | { kind: "mapped"; unit: Unit }
+  | { kind: "ambiguous"; matches: Unit[] };
 
 /** Bindings for `evaluate`: every schema field, in schema order, as typed. */
 export function bindingsFor(fields: Field[], ev: ConcreteEvent): { name: string; literal: string }[] {
   return fields.map((f) => ({ name: f.name, literal: ev.values[f.name] ?? "" }));
 }
 
-/** Expressions for `evaluate`: the assumption first, then each unit's predicate. */
-export const evaluationExprs = (assumption: string, units: Unit[]) => [assumption, ...units.map((u) => u.predicate)];
+/** Expressions for `evaluate`: the assumption, each unit's predicate, then the generated fallback. */
+export const evaluationExprs = (assumption: string, units: Unit[]) => [
+  assumption,
+  ...units.map((u) => u.predicate),
+  fallbackPredicate(units),
+];
 
 /**
  * Turns the runtime's per-expression results into a translation. No first
- * match wins: zero matches is unmapped, several is ambiguous, and a unit
- * whose predicate didn't evaluate to a bool makes the whole event an error.
+ * match wins: several matches is ambiguous (never the fallback), a unit whose
+ * predicate didn't evaluate to a bool makes the whole event an error, and an
+ * event outside the assumption isn't translated at all. Only an in-domain
+ * event that every unit evaluates to false goes to the fallback — and the
+ * runtime's own value of the fallback predicate must agree.
  */
 export function classify(batch: EvaluationBatch, units: Unit[]): Classification {
   if (batch.inputErrors.length > 0) return { kind: "input-error", errors: batch.inputErrors };
@@ -235,9 +326,17 @@ export function classify(batch: EvaluationBatch, units: Unit[]): Classification 
     else if (r.value) matches.push(u);
   });
   if (errors.length > 0) return { kind: "unit-error", errors, matches, inDomain };
-  if (matches.length === 0) return { kind: "unmapped", inDomain };
-  if (matches.length === 1) return { kind: "mapped", unit: matches[0], inDomain };
-  return { kind: "ambiguous", matches, inDomain };
+  if (!inDomain) return { kind: "outside-domain", matches };
+  const fb = rest[units.length];
+  if (!fb?.ok || fb.value !== (matches.length === 0)) {
+    return {
+      kind: "fallback-error",
+      error: !fb ? "no result for the fallback" : !fb.ok ? `${fb.kind}: ${fb.error}` : `fallback evaluated to ${fb.value}`,
+    };
+  }
+  if (matches.length === 0) return { kind: "fallback" };
+  if (matches.length === 1) return { kind: "mapped", unit: matches[0] };
+  return { kind: "ambiguous", matches };
 }
 
 /** What a proof run was about; any difference makes its results stale. */
@@ -246,6 +345,7 @@ export function proofFingerprint(w: Workbench): string {
     w.schema,
     w.assumption,
     w.units.map((u) => [u.key, u.name, u.predicate, u.symbol]),
+    w.fallback,
     w.timeoutSec,
     w.unroll,
   ]);
@@ -257,6 +357,7 @@ export function translationFingerprint(w: Workbench): string {
     w.schema,
     w.assumption,
     w.units.map((u) => [u.key, u.name, u.predicate, u.symbol]),
+    w.fallback,
     w.events.map((e) => [e.key, e.values]),
   ]);
 }
@@ -264,7 +365,16 @@ export function translationFingerprint(w: Workbench): string {
 let counter = 0;
 export const freshKey = (prefix: string) => `${prefix}${Date.now().toString(36)}${(counter++).toString(36)}`;
 
-type Shared = { s: string; a: string; u: [string, string, string][]; e: Record<string, string>[]; t: number; k: number };
+type Shared = {
+  s: string;
+  a: string;
+  u: [string, string, string][];
+  /** Fallback event; absent in links made before it existed. */
+  f?: string;
+  e: Record<string, string>[];
+  t: number;
+  k: number;
+};
 
 /** Base64url of UTF-8 JSON, the same scheme the other tools' share links use. */
 export function encodeWorkbench(w: Workbench): string {
@@ -272,6 +382,7 @@ export function encodeWorkbench(w: Workbench): string {
     s: w.schema,
     a: w.assumption,
     u: w.units.map((u) => [u.name, u.predicate, u.symbol]),
+    f: w.fallback,
     e: w.events.map((e) => e.values),
     t: w.timeoutSec,
     k: w.unroll,
@@ -289,15 +400,17 @@ export function decodeWorkbench(param: string): Workbench | null {
     const s = JSON.parse(new TextDecoder().decode(bytes)) as Partial<Shared>;
     if (typeof s.s !== "string" || typeof s.a !== "string" || !Array.isArray(s.u) || !Array.isArray(s.e)) return null;
     const str = (x: unknown) => (typeof x === "string" ? x : "");
+    const units = s.u.map((u) => ({
+      key: freshKey("u"),
+      name: str(u?.[0]),
+      predicate: str(u?.[1]),
+      symbol: str(u?.[2]),
+    }));
     return {
       schema: s.s,
       assumption: s.a,
-      units: s.u.map((u) => ({
-        key: freshKey("u"),
-        name: str(u?.[0]),
-        predicate: str(u?.[1]),
-        symbol: str(u?.[2]),
-      })),
+      units,
+      fallback: typeof s.f === "string" ? s.f : defaultFallback(units),
       events: s.e.map((values) => ({
         key: freshKey("e"),
         values: Object.fromEntries(
