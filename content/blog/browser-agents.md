@@ -449,10 +449,6 @@ I also realised that there was a core issue with the experience: **users can't m
 
 Another thing this allows is also for the extractor to attach an agent on an **existing tab for a failed task** (given a previous agent failed on that tab). The new executor can **retry on the same tab now** (solving our **idempotency** problem partially).
 
-At this point, I realised I had homework that was due in 2 hours but this work was way too fun so I just had **my agent answer the quiz on my behalf**.
-
-![Agent answering Canvas](browser-agents-23.png)
-
 # Phase 7: Preemption
 
 Preemption in our architecture is **quite simple**, just treat the user as **another agent**+. The bigger problem is: **how to make sure the agent doesn't hear itself and think it's the user**. There are existing solutions to this known as **echo cancellation**, but honestly I just decided to have an **unmute button** that stops the agent properly. You wouldn't want **unwanted sounds interrupting your agents** anyways.
